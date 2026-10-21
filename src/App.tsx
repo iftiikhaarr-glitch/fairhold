@@ -73,7 +73,10 @@ export default function App() {
               item comes back.
             </p>
           </div>
-          <ModeBadges config={config} />
+          <div className="flex items-center gap-3">
+            <ModeBadges config={config} />
+            {config.demoAccessEnabled && <form method="post" action="/demo/logout"><Button type="submit" variant="outline" size="sm">Sign out demo</Button></form>}
+          </div>
         </div>
         <Separator />
       </header>

@@ -44,6 +44,7 @@ function hashKey(key) {
 export function buildApp({ store, paypal, ai, config }) {
   const app = express();
   app.disable("x-powered-by");
+  app.use(express.urlencoded({ extended: false, limit: "4kb" }));
   app.use(demoAccess({ ...config.demo, appBaseUrl: config.paypal.appBaseUrl }));
   app.use(express.json({ limit: "64kb" }));
   const integrationModes = () => ({ paypal: paypal.mode, ai: ai.mode });
@@ -126,6 +127,7 @@ export function buildApp({ store, paypal, ai, config }) {
       paypalClientId: config.paypal.enabled ? config.paypal.clientId : null,
       maxReportChars: config.ai.maxReportChars,
       canResetDemo: await canResetDemo(),
+      demoAccessEnabled: Boolean(config.demo?.password),
     });
   }));
 

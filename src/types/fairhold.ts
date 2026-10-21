@@ -84,6 +84,7 @@ export interface RentalEvent {
 }
 
 export interface AppConfig {
+  demoAccessEnabled?: boolean;
   currency: string;
   modes: { paypal: "sandbox" | "simulated"; ai: "live" | "fixture" };
   paypalClientId: string | null;

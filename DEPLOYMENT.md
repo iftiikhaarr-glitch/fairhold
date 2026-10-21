@@ -27,7 +27,10 @@ Configure `NODE_ENV=production`, `DEMO_ACCESS_USER=judge`, a random
 to the actual assigned public HTTPS origin. Add the sandbox PayPal client ID
 and secret and `AI_API_KEY` through Replit Secrets, never through source code
 or `VITE_` variables. The shared reviewer login is separate from integration
-credentials. Keep it private and provide judge access through the approved
+credentials. Web sign-in creates an eight-hour signed session in an HttpOnly,
+Secure, SameSite=Lax cookie on HTTPS. API scripts can also use Basic
+authorization. Sign-out clears the browser session; altered and expired cookies
+are refused. Keep the password private and provide judge access through the approved
 testing instructions.
 
 Use Autoscale with durable PostgreSQL. Review actual estimated charges and
