@@ -2,7 +2,7 @@
 
 Prepared 21 October 2026. Read this before changing deployment or storage.
 
-## Source and verified baseline
+## Original source baseline (historical)
 
 - Repository: https://github.com/iftiikhaarr-glitch/fairhold
 - Runtime/code baseline: `c88a3cb63534fbc75b82f02c4f09860a4e7e17cb`.
@@ -57,7 +57,33 @@ and make only necessary persistence, configuration, and deployment changes.
 Check the user's agreed budget privately; no account billing details or keys
 belong in this public document. Agent usage and hosting can consume credits.
 
-## Immediate implementation work
+## Latest completed work and remaining steps
+
+Current source revision: `8af5d8d9620a17f951d7f12c0377d22c418011f8`.
+[Its GitHub CI](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39587398948)
+is green. PostgreSQL transactions, awaited repository calls, response buffering
+until commit, and database rental advisory locks are implemented. CI passed 47
+tests against an isolated PostgreSQL 16 database, including competing app
+instances, rollback, persisted replay, reopening, and reconciliation.
+
+Replit import initially substituted Node 20; corrected to Node 22.22 and
+verified after a workspace reload. Replit's generated `.local` templates are
+excluded from app linting and Git. In the imported workspace, installation,
+lint, 41 tests (database suite explicitly skipped), production build, zero-
+finding audit, and protected production smoke all passed. The real Replit
+development PostgreSQL adapter initialized successfully and listed zero rentals;
+no local private records were copied. Autoscale was reduced to one machine
+with 1 vCPU and 0.5 GiB RAM. The app remains unpublished.
+
+The next required step is specific approval to store the existing local PayPal
+sandbox credentials and OpenAI key in this app's Replit Secrets, create private
+judge access, and publish. That approval is pending; keys have not been copied.
+After approval: configure production storage/origin/access, confirm the separate
+production database, publish, and run the hosted acceptance journey and restart
+test. Record actual statuses and IDs. Recording/upload and final Devpost
+submission remain separate; the user has not yet authorized Devpost submission.
+
+## Original execution checklist (completed items superseded above)
 
 1. Inspect Replit's current import, runtime, production database, secret, and
    deployment settings. Use its actual supported Node runtime and one exposed
