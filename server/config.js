@@ -42,6 +42,8 @@ function realValue(v) {
 
 export const config = {
   port: Number(env.PORT || 8787),
+  databaseUrl: realValue(env.DATABASE_URL) || "",
+  storage: env.FAIRHOLD_STORAGE || (realValue(env.DATABASE_URL) ? "postgres" : "json"),
   demo: {
     username: env.DEMO_ACCESS_USER || "judge",
     password: realValue(env.DEMO_ACCESS_PASSWORD) || "",

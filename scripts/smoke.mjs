@@ -16,7 +16,7 @@ const child = spawn(process.execPath, ["server/index.js"], {
   cwd: root, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
   env: { ...process.env, NODE_ENV: "production", PORT: "0", DEMO_ACCESS_USER: "judge", DEMO_ACCESS_PASSWORD: password,
     FAIRHOLD_APP_URL: "https://demo.example.test", FAIRHOLD_DATA_FILE: path.join(dataDir, "data.json"),
-    PAYPAL_CLIENT_ID: "", PAYPAL_CLIENT_SECRET: "", AI_API_KEY: "" },
+    PAYPAL_CLIENT_ID: "", PAYPAL_CLIENT_SECRET: "", AI_API_KEY: "", DATABASE_URL: "", FAIRHOLD_STORAGE: "json" },
 });
 let output = "", ended = false;
 child.stdout.on("data", chunk => { output += chunk; });

@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { config } from "./config.js";
 
-if (config.paypal.enabled || process.env.NODE_ENV === "production") {
+if (config.storage === "postgres" || config.paypal.enabled || process.env.NODE_ENV === "production") {
   throw new Error("Reset is disabled with sandbox credentials or in production. Resolve or cancel holds individually.");
 }
 if (fs.existsSync(config.dataFile)) {

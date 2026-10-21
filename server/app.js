@@ -47,24 +47,41 @@ export function buildApp({ store, paypal, ai, config }) {
   app.use(demoAccess({ ...config.demo, appBaseUrl: config.paypal.appBaseUrl }));
   app.use(express.json({ limit: "64kb" }));
   const integrationModes = () => ({ paypal: paypal.mode, ai: ai.mode });
-  const canResetDemo = () => paypal.mode === "simulated" && !store.rentals.some(rental => rental.paypal?.mode === "sandbox");
+  const canResetDemo = async () => store.mode !== "postgres" && paypal.mode === "simulated"
+    && !(await store.listRentals()).some(rental => rental.paypal?.mode === "sandbox");
+  const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 
-  // Serialize changes to each rental within this single-process demo. PayPal
-  // request IDs still protect retries across requests/restarts. A conflicting
-  // decision must not race an in-flight capture or AI assessment.
+  // Stage the HTTP result until durable COMMIT succeeds. Database advisory
+  // locks coordinate decisions across app processes; the Set handles local
+  // duplicate clicks without opening an extra database connection.
   const activeMutations = new Set();
-  function rentalMutation(handler) {
+  function databaseMutation(handler, lockRental = false) {
     return async (req, res, next) => {
-      const id = req.params.id;
-      if (activeMutations.has(id)) {
-        return res.status(409).json({ error: { code: "OPERATION_IN_PROGRESS", message: "Another operation is running for this rental. Wait for it to finish, then refresh." } });
+      const id = lockRental ? req.params.id : null;
+      if (id && activeMutations.has(id)) {
+        return res.status(409).json({ error: { code: "OPERATION_IN_PROGRESS", message: "Another operation is running for this rental. Wait, then refresh." } });
       }
-      activeMutations.add(id);
-      try { await handler(req, res, next); }
-      catch (err) { next(err); }
-      finally { activeMutations.delete(id); }
+      if (id) activeMutations.add(id);
+      try {
+        const operation = async () => {
+          let status = 200, body, sent = false;
+          const buffered = {
+            status(value) { status = value; return buffered; },
+            json(value) { body = value; sent = true; return buffered; },
+          };
+          await handler(req, buffered, error => { throw error; });
+          if (!sent) throw new Error("Mutation completed without an HTTP result");
+          return { status, body };
+        };
+        const result = id && store.withRentalLock
+          ? await store.withRentalLock(id, operation)
+          : store.transaction ? await store.transaction(operation) : await operation();
+        res.status(result.status).json(result.body);
+      } catch (error) { next(error); }
+      finally { if (id) activeMutations.delete(id); }
     };
   }
+  const rentalMutation = handler => databaseMutation(handler, true);
 
   const log = (rentalId, type, detail = {}) =>
     store.appendEvent({ id: randomUUID(), rentalId, at: now(), type, detail });
@@ -98,34 +115,34 @@ export function buildApp({ store, paypal, ai, config }) {
   // ---- meta ---------------------------------------------------------------
 
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, modes: integrationModes(), promptVersion: PROMPT_VERSION });
+    res.json({ ok: true, modes: integrationModes(), promptVersion: PROMPT_VERSION, storage: store.mode || "json" });
   });
 
-  app.get("/api/config", (_req, res) => {
+  app.get("/api/config", asyncRoute(async (_req, res) => {
     // Client ID is a public identifier; the secret never leaves the server.
     res.json({
       currency: config.currency,
       modes: integrationModes(),
       paypalClientId: config.paypal.enabled ? config.paypal.clientId : null,
       maxReportChars: config.ai.maxReportChars,
-      canResetDemo: canResetDemo(),
+      canResetDemo: await canResetDemo(),
     });
-  });
+  }));
 
   // ---- rentals ------------------------------------------------------------
 
-  app.get("/api/rentals", (_req, res) => {
-    const rentals = [...store.rentals].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(serializeRental);
+  app.get("/api/rentals", asyncRoute(async (_req, res) => {
+    const rentals = [...(await store.listRentals())].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(serializeRental);
     res.json({ rentals });
-  });
+  }));
 
-  app.get("/api/rentals/:id", (req, res) => {
-    const rental = store.findRental(req.params.id);
+  app.get("/api/rentals/:id", asyncRoute(async (req, res) => {
+    const rental = await store.findRental(req.params.id);
     if (!rental) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Rental not found" } });
-    res.json({ rental: serializeRental(rental), events: store.eventsFor(rental.id), role: roleFromKey(rental, req) });
-  });
+    res.json({ rental: serializeRental(rental), events: await store.eventsFor(rental.id), role: roleFromKey(rental, req) });
+  }));
 
-  app.post("/api/rentals", async (req, res, next) => {
+  app.post("/api/rentals", databaseMutation(async (req, res, next) => {
     try {
       const { itemName, ownerName, renterName, checkoutCondition, deposit } = req.body || {};
       if (typeof itemName !== "string" || !itemName.trim() || itemName.length > LIMITS.itemName)
@@ -152,7 +169,7 @@ export function buildApp({ store, paypal, ai, config }) {
       const ownerKey = randomBytes(24).toString("hex");
       const renterKey = randomBytes(24).toString("hex");
 
-      const rental = store.saveRental({
+      const rental = await store.saveRental({
         id,
         itemName: itemName.trim(),
         ownerName: ownerName.trim(),
@@ -171,20 +188,20 @@ export function buildApp({ store, paypal, ai, config }) {
         createdAt: now(),
         updatedAt: now(),
       });
-      log(id, "created", { itemName: rental.itemName, depositCents });
-      log(id, "order_created", { orderId: order.orderId, mode: paypal.mode });
+      await log(id, "created", { itemName: rental.itemName, depositCents });
+      await log(id, "order_created", { orderId: order.orderId, mode: paypal.mode });
       // Keys are returned exactly once and are never stored in plaintext.
       res.status(201).json({ rental: serializeRental(rental), keys: { ownerKey, renterKey } });
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   // Called after the renter approves in the PayPal sheet (sandbox) or clicks
   // the labeled simulated approval button. Renter key required.
   app.post("/api/rentals/:id/authorize", rentalMutation(async (req, res, next) => {
     try {
-      const rental = mustFind(req.params.id);
+      const rental = await mustFind(req.params.id);
       requireRole(rental, req, ["renter"]);
       if (rental.state === "hold_active") return res.json({ rental: serializeRental(rental) }); // safe retry
       assertTransition(rental.state, "hold_active");
@@ -195,8 +212,8 @@ export function buildApp({ store, paypal, ai, config }) {
       rental.paypal.expiresAt = result.expiresAt;
       rental.state = "hold_active";
       rental.updatedAt = now();
-      store.saveRental(rental);
-      log(rental.id, "authorized", { authorizationId: result.authorizationId, expiresAt: result.expiresAt });
+      await store.saveRental(rental);
+      await log(rental.id, "authorized", { authorizationId: result.authorizationId, expiresAt: result.expiresAt });
       res.json({ rental: serializeRental(rental) });
     } catch (err) {
       next(err);
@@ -206,7 +223,7 @@ export function buildApp({ store, paypal, ai, config }) {
   // Either party may file the return condition report.
   app.post("/api/rentals/:id/report", rentalMutation(async (req, res, next) => {
     try {
-      const rental = mustFind(req.params.id);
+      const rental = await mustFind(req.params.id);
       const role = requireRole(rental, req, ["owner", "renter"]);
       assertTransition(rental.state, "review_pending");
       const { report } = req.body || {};
@@ -217,8 +234,8 @@ export function buildApp({ store, paypal, ai, config }) {
       rental.state = "review_pending";
       rental.report = { text: report.trim(), submittedAt: now(), submittedBy: role };
       rental.updatedAt = now();
-      store.saveRental(rental);
-      log(rental.id, "report_submitted", { chars: report.trim().length, by: role });
+      await store.saveRental(rental);
+      await log(rental.id, "report_submitted", { chars: report.trim().length, by: role });
 
       const result = await ai.assessCondition({
         itemName: rental.itemName,
@@ -232,7 +249,7 @@ export function buildApp({ store, paypal, ai, config }) {
       if (result.ok) {
         rental.assessment = { ...result.assessment, aiMode: ai.mode };
         rental.assessmentError = null;
-        log(rental.id, "proposal_created", {
+        await log(rental.id, "proposal_created", {
           totalCents: result.assessment.totalCents,
           items: result.assessment.items.length,
           evidenceAllVerified: result.assessment.items.every((i) => i.evidenceVerified === true),
@@ -243,10 +260,10 @@ export function buildApp({ store, paypal, ai, config }) {
       } else {
         rental.assessment = null;
         rental.assessmentError = result.reason;
-        log(rental.id, "proposal_failed", { reason: result.reason });
+        await log(rental.id, "proposal_failed", { reason: result.reason });
       }
       rental.updatedAt = now();
-      store.saveRental(rental);
+      await store.saveRental(rental);
       res.json({ rental: serializeRental(rental) });
     } catch (err) {
       next(err);
@@ -260,15 +277,15 @@ export function buildApp({ store, paypal, ai, config }) {
   // surfaced as errors and the rental stays under review.
   app.post("/api/rentals/:id/resolve", rentalMutation(async (req, res, next) => {
     try {
-      const rental = mustFind(req.params.id);
+      const rental = await mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
       const { action, amount } = req.body || {};
       if (!["capture", "release"].includes(action)) throw badRequest("action must be 'capture' or 'release'");
 
       const idemKey = req.get("Idempotency-Key") || null;
       if (idemKey) {
-        const prior = store.idempotencyGet("resolve", `${rental.id}:${idemKey}`);
-        if (prior) return res.json({ rental: serializeRental(store.findRental(rental.id)), replayed: true, resolution: prior });
+        const prior = await store.idempotencyGet("resolve", `${rental.id}:${idemKey}`);
+        if (prior) return res.json({ rental: serializeRental(await store.findRental(rental.id)), replayed: true, resolution: prior });
       }
       if (isTerminal(rental.state)) {
         // Same decision repeated after success: return current state instead
@@ -284,7 +301,7 @@ export function buildApp({ store, paypal, ai, config }) {
         await paypal.voidAuthorization(rental.paypal.authorizationId, { idempotencyKey: `void-${rental.id}` });
         rental.state = "resolved_released";
         rental.resolution = { action: "release", amountCents: 0, decidedAt: now() };
-        log(rental.id, "released", { authorizationId: rental.paypal.authorizationId });
+        await log(rental.id, "released", { authorizationId: rental.paypal.authorizationId });
       } else {
         const amountCents = dollarsToCents(Number(amount));
         if (amountCents === null || amountCents <= 0) throw badRequest("capture amount must be greater than zero");
@@ -312,8 +329,8 @@ export function buildApp({ store, paypal, ai, config }) {
             requestedAt: now(),
           };
           rental.updatedAt = now();
-          store.saveRental(rental);
-          log(rental.id, "capture_pending", { captureId: capture.captureId, amountCents, statusDetails: capture.statusDetails || null });
+          await store.saveRental(rental);
+          await log(rental.id, "capture_pending", { captureId: capture.captureId, amountCents, statusDetails: capture.statusDetails || null });
           return res.status(202).json({
             rental: serializeRental(rental),
             pending: true,
@@ -321,7 +338,7 @@ export function buildApp({ store, paypal, ai, config }) {
           });
         } else {
           // DECLINED / FAILED / unexpected: no money moved; stay reviewable.
-          log(rental.id, "capture_not_completed", { status: capture.status, statusDetails: capture.statusDetails || null });
+          await log(rental.id, "capture_not_completed", { status: capture.status, statusDetails: capture.statusDetails || null });
           return res.status(502).json({
             error: {
               code: "CAPTURE_NOT_COMPLETED",
@@ -332,8 +349,8 @@ export function buildApp({ store, paypal, ai, config }) {
         }
       }
       rental.updatedAt = now();
-      store.saveRental(rental);
-      if (idemKey) store.idempotencySet("resolve", `${rental.id}:${idemKey}`, rental.resolution);
+      await store.saveRental(rental);
+      if (idemKey) await store.idempotencySet("resolve", `${rental.id}:${idemKey}`, rental.resolution);
       res.json({ rental: serializeRental(rental) });
     } catch (err) {
       next(err);
@@ -344,7 +361,7 @@ export function buildApp({ store, paypal, ai, config }) {
   // state: re-read the capture and the authorization from the source of truth.
   app.post("/api/rentals/:id/reconcile", rentalMutation(async (req, res, next) => {
     try {
-      const rental = mustFind(req.params.id);
+      const rental = await mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
 
       if (rental.pendingCapture) {
@@ -353,11 +370,11 @@ export function buildApp({ store, paypal, ai, config }) {
           const amountCents = rental.pendingCapture.amountCents;
           rental.pendingCapture = null;
           await finalizeCapture(rental, { captureId: capture.id, status: "COMPLETED" }, amountCents);
-          log(rental.id, "capture_reconciled", { captureId: capture.id, outcome: "COMPLETED" });
+          await log(rental.id, "capture_reconciled", { captureId: capture.id, outcome: "COMPLETED" });
         } else if (capture.status === "PENDING") {
           rental.pendingCapture.statusDetails = capture.statusDetails || rental.pendingCapture.statusDetails;
           rental.updatedAt = now();
-          store.saveRental(rental);
+          await store.saveRental(rental);
           return res.json({ rental: serializeRental(rental), stillPending: true });
         } else {
           const failedStatus = capture.status;
@@ -365,8 +382,8 @@ export function buildApp({ store, paypal, ai, config }) {
           assertTransition(rental.state, "under_review");
           rental.state = "under_review";
           rental.updatedAt = now();
-          store.saveRental(rental);
-          log(rental.id, "capture_reconciled", { outcome: failedStatus });
+          await store.saveRental(rental);
+          await log(rental.id, "capture_reconciled", { outcome: failedStatus });
           return res.json({
             rental: serializeRental(rental),
             captureFailed: true,
@@ -378,7 +395,7 @@ export function buildApp({ store, paypal, ai, config }) {
         const auth = await paypal.getAuthorization(rental.paypal.authorizationId);
         rental.resolution = { ...rental.resolution, authorizationStatus: auth.status };
         rental.updatedAt = now();
-        store.saveRental(rental);
+        await store.saveRental(rental);
       }
       res.json({ rental: serializeRental(rental) });
     } catch (err) {
@@ -408,24 +425,26 @@ export function buildApp({ store, paypal, ai, config }) {
       authorizationStatus,
       decidedAt: now(),
     };
-    log(rental.id, "captured", { amountCents, captureId: capture.captureId, authorizationStatus });
+    rental.updatedAt = now();
+    await store.saveRental(rental);
+    await log(rental.id, "captured", { amountCents, captureId: capture.captureId, authorizationStatus });
   }
 
   app.post("/api/rentals/:id/cancel", rentalMutation(async (req, res, next) => {
     try {
-      const rental = mustFind(req.params.id);
+      const rental = await mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
       if (rental.state === "cancelled") return res.json({ rental: serializeRental(rental) });
       if (!canTransition(rental.state, "cancelled")) throw new TransitionError(rental.state, "cancelled");
       if (rental.paypal.authorizationId) {
         await paypal.voidAuthorization(rental.paypal.authorizationId, { idempotencyKey: `void-${rental.id}` });
-        log(rental.id, "authorization_voided", { authorizationId: rental.paypal.authorizationId });
+        await log(rental.id, "authorization_voided", { authorizationId: rental.paypal.authorizationId });
       }
       rental.state = "cancelled";
       rental.resolution = { action: "cancel", amountCents: 0, decidedAt: now() };
       rental.updatedAt = now();
-      store.saveRental(rental);
-      log(rental.id, "cancelled", {});
+      await store.saveRental(rental);
+      await log(rental.id, "cancelled", {});
       res.json({ rental: serializeRental(rental) });
     } catch (err) {
       next(err);
@@ -434,16 +453,16 @@ export function buildApp({ store, paypal, ai, config }) {
 
   // ---- demo reset -----------------------------------------------------------
 
-  app.post("/api/demo/reset", (_req, res) => {
-    if (!canResetDemo()) {
+  app.post("/api/demo/reset", databaseMutation(async (_req, res) => {
+    if (!(await canResetDemo())) {
       return res.status(409).json({ error: { code: "RESET_DISABLED", message: "Reset is disabled for PayPal sandbox rentals. Resolve or cancel each hold individually." } });
     }
-    store.replaceAll({ rentals: [], events: [], idempotency: {} });
+    await store.replaceAll({ rentals: [], events: [], idempotency: {} });
     res.json({ ok: true });
-  });
+  }));
 
-  function mustFind(id) {
-    const rental = store.findRental(id);
+  async function mustFind(id) {
+    const rental = await store.findRental(id);
     if (!rental) {
       const err = new Error("Rental not found");
       err.status = 404;

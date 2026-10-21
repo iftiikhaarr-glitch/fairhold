@@ -27,6 +27,8 @@ export function createStore(file) {
   load();
 
   return {
+    mode: "json",
+    listRentals() { return state.rentals; },
     get rentals() {
       return state.rentals;
     },
