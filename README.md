@@ -20,6 +20,9 @@ Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
 judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
 and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
+**Replit continuation:** read `REPLIT_HANDOFF.md` before importing or publishing.
+Production database adaptation and Replit deployment are still pending.
+
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
   sandbox), with idempotent mutations and capture statuses checked explicitly.
