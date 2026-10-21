@@ -44,8 +44,8 @@ run returned `CAPTURED`, and a separate full-release test returned `VOIDED`.
    Explain the separate sandbox buyer login and labeled fallbacks.
 3. Run `npm run check`, then `npm run smoke`; distinguish automated test
    adapters from real external responses.
-4. Explain `render.yaml`: build/start commands, HTTPS origin, one instance,
-   persistent disk, private server variables, and protected judging access.
+4. Explain `.replit`: build/start commands, one public port, HTTPS origin,
+   production PostgreSQL, private server variables, and protected judging access.
    If no deployment has happened, describe it as proposed configuration.
 5. Once deployed, show successful deploy status, protected app, actual sandbox
    approval, real proposal, and completed capture.

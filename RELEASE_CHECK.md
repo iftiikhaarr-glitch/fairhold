@@ -2,6 +2,26 @@
 
 ## Current revision
 
+### Replit persistence update
+
+Runtime revision `f2f518e8cc70e38ad64025a2d17bac153b958f2f` adds
+PostgreSQL storage and `.replit` build/run/port configuration. Its
+[Linux CI run](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39586856144)
+passed **47 tests**, lint, TypeScript/Vite build, the zero-finding dependency
+audit, and protected production smoke. PostgreSQL 16 was a real isolated CI
+service. Coverage includes rollback, rental/event/hash/replay persistence after
+reopening, competing capture/release on independent app instances, and pending
+reconciliation visible to another instance. Successful HTTP mutation responses
+wait for COMMIT. Database advisory locks coordinate rental mutations; JSON
+remains available for local zero-key setup. Local Windows checks passed 41
+tests with the PostgreSQL suite explicitly skipped because no dedicated local
+test database was configured.
+
+Hosted acceptance is in progress; these checks do not establish a published app
+or new external payment verification. The earlier baseline follows for context.
+
+### Earlier dependency and protected-demo baseline
+
 - Node.js 24.15.0; Vite 7.3.7; Tailwind CSS and its Vite plugin 4.3.3.
 - Compatible dependency fixes followed by a reviewed Tailwind 4 migration
   removed the previously reported advisory chain. Unused inspection tooling
@@ -29,7 +49,7 @@
   Ubuntu 24.04 explicitly; the workflow records the current run's result.
 
 Zero audit findings is a point-in-time registry result, not a guarantee of
-security. Real tenant accounts, database transactions, webhooks, broader threat
+security. Real tenant accounts, webhooks, broader threat
 review, and deployed acceptance testing remain outside this prototype check.
 No dependency warning is suppressed with an override or ignored audit severity.
 

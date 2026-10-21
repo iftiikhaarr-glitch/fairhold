@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Replit installs editor/Agent templates here; they are not app source.
+  globalIgnores(['dist', '.local/**', '.cache/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

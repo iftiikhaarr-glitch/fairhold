@@ -2,8 +2,49 @@
 
 GitHub hosts the source and automated checks. FairHold's Express backend must
 run on a Node hosting service: GitHub Pages alone cannot run PayPal or AI calls.
-The included `render.yaml` proposes a protected sandbox judging demo with one
-server and durable storage. It is configuration, not evidence of deployment.
+Replit is the selected host. The included `.replit` config builds and runs one
+Express service for both the UI and API. `render.yaml` remains an optional
+alternative. Configuration files alone are not evidence of deployment.
+
+## Replit deployment
+
+Import this repository without asking Agent to rebuild the app. Confirm the
+runtime is Node 22.12+ (Replit import may replace the requested module with
+Node 20; correct that before installing/building). `.replit` maps port 8787 to
+the public web port, builds with `npm ci --include=dev && npm run build`, and
+starts with `npm start`.
+
+Create the app's PostgreSQL database through Replit's Database tool. Set
+`FAIRHOLD_STORAGE=postgres`; the server requires `DATABASE_URL` and refuses to
+fall back to ephemeral JSON. Replit manages separate development and production
+databases: confirm the published service uses its production database, not a
+copied development connection. Tables are initialized transactionally at startup.
+This deployment begins with fresh synthetic rentals; private local payment
+records are not migrated or erased.
+
+Configure `NODE_ENV=production`, `DEMO_ACCESS_USER=judge`, a random
+`DEMO_ACCESS_PASSWORD` of at least 24 characters, and `FAIRHOLD_APP_URL` equal
+to the actual assigned public HTTPS origin. Add the sandbox PayPal client ID
+and secret and `AI_API_KEY` through Replit Secrets, never through source code
+or `VITE_` variables. The shared reviewer login is separate from integration
+credentials. Keep it private and provide judge access through the approved
+testing instructions.
+
+Use Autoscale with durable PostgreSQL. Review actual estimated charges and
+account spending controls before publishing. Database active time, compute,
+requests, and storage can consume credits; a displayed balance is not a hard
+project cap. Keep auto-reload disabled unless separately authorized. Render
+does not need to be activated or paid for when Replit runs the app.
+
+Run `npm run check` and `npm run smoke` in the imported workspace. GitHub CI
+also runs the real PostgreSQL tests against an isolated PostgreSQL 16 service.
+Local tests skip that suite unless a dedicated `TEST_DATABASE_URL` is set.
+Never point tests at a production database. Health checks intentionally do
+not query PostgreSQL, avoiding idle database wakeups from monitoring.
+
+After publication, complete the deployed acceptance checks below and record
+the actual URL, revision, observed payment statuses, and restart persistence.
+Do not substitute the development preview URL for a published deployment.
 
 ## Local build (PowerShell)
 
@@ -121,7 +162,8 @@ durable database transactions, and a further security review.
   409 and must be refreshed after the first operation completes.
 - Reset is disabled for sandbox rentals so it cannot erase outstanding holds.
   Cancel or resolve rentals individually.
-- Restart the service and confirm records persist on the disk. Retain
+- Restart the service and confirm records persist in PostgreSQL (or the
+  attached disk for the optional JSON deployment). Retain
   redacted evidence. Do not reset or remove the disk while holds are active.
 - Existing `verify:live` is intended for an unprotected local development
   server. Scripts against the protected host also need Basic authorization.

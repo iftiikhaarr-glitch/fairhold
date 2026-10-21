@@ -21,7 +21,7 @@ judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
 and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
 **Replit continuation:** read `REPLIT_HANDOFF.md` before importing or publishing.
-Production database adaptation and Replit deployment are still pending.
+PostgreSQL storage is implemented and tested; hosted Replit verification is in progress.
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -159,7 +159,7 @@ the browser only sees the public client ID.
 │  │               timeout/retry) + zod/business validation; │
 │  │               verbatim evidence verification; fixture   │
 │  ├─ app.js       REST API, role keys, idempotency, events  │
-│  └─ store.js     JSON persistence, atomic writes, cents    │
+│  └─ store.js / postgres-store.js  local JSON or PostgreSQL │
 └───────────────────────────────────────────────────────────┘
 ```
 
@@ -205,14 +205,17 @@ Key design rules (see SPEC.md for the full spec):
 ## Limitations
 
 Demo-grade role keys instead of user accounts/OAuth (required before public
-deployment); demo-scale JSON persistence; sync verification + manual
+deployment); local JSON or hosted PostgreSQL persistence; sync verification + manual
 reconcile instead of webhooks; sandbox-only payments; fixture AI when no key
 is configured; text-only condition reports (no image analysis yet); AI
 proposals are advisory and based solely on the submitted report.
 
 For a hosted judging demo, `NODE_ENV=production` requires an HTTPS app origin,
-a demo access password of at least 24 characters, and an explicit data path.
-Use durable storage and a single server instance. Shared demo access protects
+a demo access password of at least 24 characters, and durable storage.
+Replit uses `DATABASE_URL` and `FAIRHOLD_STORAGE=postgres`; local JSON hosting
+requires an explicit durable data path and a single server instance.
+PostgreSQL transactions and rental advisory locks coordinate multiple processes.
+Shared demo access protects
 the page and API; per-rental role keys still protect payment actions. This
 does not provide tenant isolation. See `DEPLOYMENT.md` and `render.yaml`.
 

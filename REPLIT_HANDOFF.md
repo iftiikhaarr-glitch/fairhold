@@ -36,15 +36,19 @@ shared Basic access gate protects the hosted judging demo, with cross-site
 write refusal. This is a shared synthetic reviewer workspace, not isolated
 customer accounts. Reset is refused for sandbox adapters or stored sandbox
 records. Per-rental mutation locks prevent conflicting in-process actions.
-Corrupt existing storage fails open-to-operator attention by refusing startup;
+Corrupt existing storage refuses startup and requires operator attention;
 it must never be silently overwritten. Do not weaken these protections.
 
-## Current Replit status: not yet imported or deployed
+## Current Replit status: imported; deployment verification in progress
 
 The user chose to investigate Replit instead of buying Render hosting. Replit
 sign-in, an existing Core subscription, and available credits were verified.
-No FairHold Replit project, production database, or deployment has been created.
-No Replit project-specific charge has been deliberately incurred. Render's
+FairHold was imported at https://replit.com/@iftiikhaarr/fairhold on 21 October.
+Automatic Agent setup was stopped after five seconds. The imported revision is
+`f2f518e8cc70e38ad64025a2d17bac153b958f2f`; its Linux CI passed 47 tests,
+including real PostgreSQL 16 persistence and cross-process locks. The
+development database is present. Production deployment has not yet been
+verified. Render's
 configuration remains an optional alternative; no paid FairHold Render service
 was activated. There is no hosted FairHold URL or finished video yet.
 
