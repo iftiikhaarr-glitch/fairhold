@@ -1,19 +1,22 @@
 # Attribution record
 
-Prepared 2026-10-18 for the PayPal AI Hackathon submission.
+Prepared 2026-10-18; updated 2026-10-21 for the PayPal AI Hackathon submission.
 
 ## Development assistance
 
 This project's code, documentation, and test suite were drafted with AI
 assistance (Kimi Work agent, Moonshot AI) acting on the entrant's
-instructions, during the hackathon submission period. The concept, product
+instructions, during the hackathon submission period. OpenAI Codex also
+assisted with credential setup, debugging the checkout redirect and amount
+handling, sandbox verification, regression tests, and release documentation. The concept, product
 decisions, and review remain the entrant's responsibility. The entrant must
 review the Official Rules §4 (Intellectual Property / third-party assistance:
 "Submission components are solely the Entrant's work product and the result
 of the Entrant's ideas and creativity") and confirm they are comfortable
 attesting to ownership before submitting. This record exists to make the
-assistance transparent and reviewable. **Unresolved:** none technical; the
-ownership attestation is the entrant's decision.
+assistance transparent and reviewable. The ownership attestation is the
+entrant's decision. Dependency remediation and release validation are recorded in
+RELEASE_CHECK.md.
 
 ## Runtime dependencies (npm, see package-lock.json for exact versions)
 
@@ -23,12 +26,13 @@ ownership attestation is the entrant's decision.
 | zod (4.x) | MIT | AI output schema validation |
 | react / react-dom (19.x) | MIT | Frontend |
 | react-router (7.x) | MIT | Frontend routing shell |
-| tailwindcss (3.4) + tailwindcss-animate | MIT | Styling |
+| tailwindcss (4.3) + @tailwindcss/vite + tailwindcss-animate | MIT | Styling and build integration |
 | shadcn/ui component code (Radix UI primitives, class-variance-authority, clsx, tailwind-merge, lucide-react icons, sonner, etc.) | MIT (each) | UI components (vendored source pattern) |
 
-Dev dependencies (Vite, TypeScript, ESLint, concurrently, PostCSS,
-autoprefixer, @types/*) are build-time only; all MIT or similarly permissive.
-The MIT LICENSE in this repository is compatible with all of the above.
+Dev dependencies include Vite, TypeScript, ESLint, concurrently, PostCSS,
+autoprefixer, and @types/*. The table summarizes principal dependencies; it
+is not a complete transitive license audit. Preserve upstream license notices
+when redistributing dependencies. The project source uses the included MIT license.
 
 ## External services
 

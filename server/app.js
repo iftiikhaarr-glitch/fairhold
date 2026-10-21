@@ -5,10 +5,11 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { REPO_ROOT, integrationModes } from "./config.js";
+import { REPO_ROOT } from "./config.js";
 import { assertTransition, canTransition, centsToMoney, dollarsToCents, isTerminal, TransitionError } from "./machine.js";
 import { PROMPT_VERSION } from "./ai.js";
 import { PayPalError } from "./paypal.js";
+import { demoAccess } from "./access.js";
 
 const LIMITS = {
   itemName: 80,
@@ -42,7 +43,28 @@ function hashKey(key) {
 
 export function buildApp({ store, paypal, ai, config }) {
   const app = express();
+  app.disable("x-powered-by");
+  app.use(demoAccess({ ...config.demo, appBaseUrl: config.paypal.appBaseUrl }));
   app.use(express.json({ limit: "64kb" }));
+  const integrationModes = () => ({ paypal: paypal.mode, ai: ai.mode });
+  const canResetDemo = () => paypal.mode === "simulated" && !store.rentals.some(rental => rental.paypal?.mode === "sandbox");
+
+  // Serialize changes to each rental within this single-process demo. PayPal
+  // request IDs still protect retries across requests/restarts. A conflicting
+  // decision must not race an in-flight capture or AI assessment.
+  const activeMutations = new Set();
+  function rentalMutation(handler) {
+    return async (req, res, next) => {
+      const id = req.params.id;
+      if (activeMutations.has(id)) {
+        return res.status(409).json({ error: { code: "OPERATION_IN_PROGRESS", message: "Another operation is running for this rental. Wait for it to finish, then refresh." } });
+      }
+      activeMutations.add(id);
+      try { await handler(req, res, next); }
+      catch (err) { next(err); }
+      finally { activeMutations.delete(id); }
+    };
+  }
 
   const log = (rentalId, type, detail = {}) =>
     store.appendEvent({ id: randomUUID(), rentalId, at: now(), type, detail });
@@ -86,6 +108,7 @@ export function buildApp({ store, paypal, ai, config }) {
       modes: integrationModes(),
       paypalClientId: config.paypal.enabled ? config.paypal.clientId : null,
       maxReportChars: config.ai.maxReportChars,
+      canResetDemo: canResetDemo(),
     });
   });
 
@@ -159,7 +182,7 @@ export function buildApp({ store, paypal, ai, config }) {
 
   // Called after the renter approves in the PayPal sheet (sandbox) or clicks
   // the labeled simulated approval button. Renter key required.
-  app.post("/api/rentals/:id/authorize", async (req, res, next) => {
+  app.post("/api/rentals/:id/authorize", rentalMutation(async (req, res, next) => {
     try {
       const rental = mustFind(req.params.id);
       requireRole(rental, req, ["renter"]);
@@ -178,10 +201,10 @@ export function buildApp({ store, paypal, ai, config }) {
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   // Either party may file the return condition report.
-  app.post("/api/rentals/:id/report", async (req, res, next) => {
+  app.post("/api/rentals/:id/report", rentalMutation(async (req, res, next) => {
     try {
       const rental = mustFind(req.params.id);
       const role = requireRole(rental, req, ["owner", "renter"]);
@@ -228,14 +251,14 @@ export function buildApp({ store, paypal, ai, config }) {
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   // Owner decision. Idempotent: the same Idempotency-Key (or a repeated
   // decision on a resolved rental) never captures twice. PayPal's capture
   // status is checked explicitly: only COMPLETED resolves the rental;
   // PENDING parks it in `attention` for reconciliation; DECLINED/FAILED are
   // surfaced as errors and the rental stays under review.
-  app.post("/api/rentals/:id/resolve", async (req, res, next) => {
+  app.post("/api/rentals/:id/resolve", rentalMutation(async (req, res, next) => {
     try {
       const rental = mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
@@ -315,11 +338,11 @@ export function buildApp({ store, paypal, ai, config }) {
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   // Reconcile an ambiguous outcome with PayPal instead of trusting local
   // state: re-read the capture and the authorization from the source of truth.
-  app.post("/api/rentals/:id/reconcile", async (req, res, next) => {
+  app.post("/api/rentals/:id/reconcile", rentalMutation(async (req, res, next) => {
     try {
       const rental = mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
@@ -361,7 +384,7 @@ export function buildApp({ store, paypal, ai, config }) {
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   async function finalizeCapture(rental, capture, amountCents) {
     // Ask PayPal what actually happened to the authorization instead of
@@ -388,7 +411,7 @@ export function buildApp({ store, paypal, ai, config }) {
     log(rental.id, "captured", { amountCents, captureId: capture.captureId, authorizationStatus });
   }
 
-  app.post("/api/rentals/:id/cancel", async (req, res, next) => {
+  app.post("/api/rentals/:id/cancel", rentalMutation(async (req, res, next) => {
     try {
       const rental = mustFind(req.params.id);
       requireRole(rental, req, ["owner"]);
@@ -407,11 +430,14 @@ export function buildApp({ store, paypal, ai, config }) {
     } catch (err) {
       next(err);
     }
-  });
+  }));
 
   // ---- demo reset -----------------------------------------------------------
 
   app.post("/api/demo/reset", (_req, res) => {
+    if (!canResetDemo()) {
+      return res.status(409).json({ error: { code: "RESET_DISABLED", message: "Reset is disabled for PayPal sandbox rentals. Resolve or cancel each hold individually." } });
+    }
     store.replaceAll({ rentals: [], events: [], idempotency: {} });
     res.json({ ok: true });
   });
@@ -437,7 +463,6 @@ export function buildApp({ store, paypal, ai, config }) {
 
   // ---- errors ---------------------------------------------------------------
 
-  // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
     if (err instanceof TransitionError) {
       return res.status(409).json({ error: { code: err.code, message: err.message } });

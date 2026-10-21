@@ -80,6 +80,8 @@ test("health reports labeled integration modes", async () => {
   const { status, body } = await api("GET", "/api/health");
   assert.equal(status, 200);
   assert.deepEqual(body.modes, { paypal: "simulated", ai: "fixture" });
+  const clientConfig = await api("GET", "/api/config");
+  assert.deepEqual(clientConfig.body.modes, body.modes);
 });
 
 test("input validation rejects bad rentals", async () => {
@@ -108,7 +110,7 @@ test("core journey: create -> authorize -> proposal -> partial capture", async (
   assert.equal(res1.body.rental.resolution.status, "COMPLETED");
   assert.equal(res1.body.rental.resolution.finalCapture, true);
   // Remainder truth comes from the authorization lookup, not subtraction.
-  assert.equal(res1.body.rental.resolution.authorizationStatus, "VOIDED");
+  assert.equal(res1.body.rental.resolution.authorizationStatus, "CAPTURED");
   assert.ok(res1.body.rental.paypal.captureId);
 
   // Retried request with the same key replays; no second capture.
@@ -145,7 +147,7 @@ test("PENDING capture parks the rental in attention; reconcile completes it", as
   assert.equal(res3.body.rental.state, "resolved_captured");
   assert.equal(res3.body.rental.resolution.status, "COMPLETED");
   assert.equal(res3.body.rental.resolution.amountCents, 1200);
-  assert.equal(res3.body.rental.resolution.authorizationStatus, "VOIDED");
+  assert.equal(res3.body.rental.resolution.authorizationStatus, "CAPTURED");
 });
 
 test("PENDING capture that later fails returns the rental to review", async () => {
@@ -239,6 +241,41 @@ test("persistence survives a store reload (restart behavior)", async () => {
   assert.equal(found.itemName, "TrailBlazer 2-person tent");
   // Hashes persist, plaintext keys never do.
   assert.ok(found.auth.ownerKeyHash);
+});
+
+test("concurrent release cannot race an in-flight capture; completed retry replays", async () => {
+  const { rental, keys } = await toUnderReview();
+  const original = paypal.captureAuthorization;
+  let unblock, started;
+  const gate = new Promise(resolve => { unblock = resolve; });
+  const entered = new Promise(resolve => { started = resolve; });
+  let captureCalls = 0;
+  paypal.captureAuthorization = async (...args) => {
+    captureCalls++;
+    started();
+    await gate;
+    return original(...args);
+  };
+  let first;
+  try {
+    first = api("POST", `/api/rentals/${rental.id}/resolve`, { action: "capture", amount: 18.50 }, { ...owner(keys), "Idempotency-Key": "concurrent-capture" });
+    await entered;
+    const competing = await api("POST", `/api/rentals/${rental.id}/resolve`, { action: "release" }, owner(keys));
+    assert.equal(competing.status, 409);
+    assert.equal(competing.body.error.code, "OPERATION_IN_PROGRESS");
+    unblock();
+    const result = await first;
+    assert.equal(result.status, 200);
+    assert.equal(result.body.rental.resolution.amountCents, 1850);
+    const retry = await api("POST", `/api/rentals/${rental.id}/resolve`, { action: "capture", amount: 18.50 }, { ...owner(keys), "Idempotency-Key": "concurrent-capture" });
+    assert.equal(retry.body.replayed, true);
+    assert.equal(retry.body.rental.paypal.captureId, result.body.rental.paypal.captureId);
+    assert.equal(captureCalls, 1);
+  } finally {
+    unblock();
+    if (first) await first;
+    paypal.captureAuthorization = original;
+  }
 });
 
 test("demo reset clears all state", async () => {

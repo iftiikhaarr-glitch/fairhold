@@ -32,7 +32,9 @@ export default function App() {
         const cfg = await api.config();
         setConfig(cfg);
         const list = await refresh();
-        if (list.length) setSelectedId(list[0].id);
+        const returnedOrder = new URLSearchParams(window.location.search).get("token");
+        const returnedRental = list.find((r) => r.paypal.orderId === returnedOrder);
+        if (list.length) setSelectedId(returnedRental?.id ?? list[0].id);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       }
@@ -104,7 +106,7 @@ export default function App() {
             </Card>
           ))}
           <Separator />
-          <Button
+          {config.canResetDemo && <Button
             variant="ghost"
             className="text-muted-foreground"
             disabled={busy}
@@ -122,7 +124,7 @@ export default function App() {
             }}
           >
             Reset demo data
-          </Button>
+          </Button>}
           <p className="text-xs text-muted-foreground">
             Sandbox / demo project. All people, items, and reports are synthetic. No real money can move: PayPal runs in
             the free sandbox, or in a clearly labeled simulation when credentials are absent.

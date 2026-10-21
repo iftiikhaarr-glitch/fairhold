@@ -258,8 +258,8 @@ export function RentalDetail({
                 <h3 className="font-medium pt-2">Step 5 · Owner decides (owner key required)</h3>
                 <p className="text-sm text-muted-foreground">
                   The AI only proposes. The owner confirms the final amount, capped at the authorized hold of{" "}
-                  {money(rental.depositCents, rental.currency)}. A final capture settles that amount; per PayPal's
-                  documentation the authorization is then voided and the uncaptured remainder is released.
+                  {money(rental.depositCents, rental.currency)}. A final capture settles only the confirmed amount.
+                  The receipt shows the capture outcome and authorization status returned by PayPal.
                 </p>
                 {isOwner ? (
                   <div className="flex flex-wrap items-end gap-2">
@@ -320,13 +320,7 @@ export function RentalDetail({
                   Captured <strong>{money(rental.resolution.amountCents, rental.currency)}</strong> for the owner.
                 </p>
                 <p className="text-sm">
-                  {rental.resolution.authorizationStatus === "VOIDED" ? (
-                    <>
-                      PayPal reports the authorization as <strong>VOIDED</strong> after this final capture — per PayPal's
-                      documentation, the uncaptured remainder ({money(rental.depositCents - rental.resolution.amountCents, rental.currency)})
-                      is released to {rental.renterName}.
-                    </>
-                  ) : rental.resolution.authorizationStatus ? (
+                  {rental.resolution.authorizationStatus ? (
                     <>
                       PayPal reports the authorization status as <strong>{rental.resolution.authorizationStatus}</strong>.
                     </>

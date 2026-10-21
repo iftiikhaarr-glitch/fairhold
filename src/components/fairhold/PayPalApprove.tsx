@@ -38,6 +38,7 @@ export function PayPalApprove({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cancelled, setCancelled] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -76,6 +77,25 @@ export function PayPalApprove({
         the owner captures after the item comes back.
       </p>
       <div ref={containerRef} aria-label="PayPal approval buttons" />
+      {rental.paypal.approveLink && (
+        <div className="grid gap-2 rounded-md border p-3">
+          <p className="text-sm text-muted-foreground">
+            If the popup does not open, approve in a new tab. After PayPal returns you to FairHold, check the approval here.
+          </p>
+          <Button asChild variant="outline">
+            <a href={rental.paypal.approveLink} target="_blank" rel="noopener noreferrer">Open PayPal in a new tab</a>
+          </Button>
+          <Button disabled={checking} onClick={async () => {
+            setChecking(true);
+            try { await onApproved(); }
+            catch (err) { onError(err instanceof Error ? err.message : "Authorization failed"); }
+            finally { setChecking(false); }
+          }}>
+            {checking ? "Checking PayPal…" : "Check PayPal approval"}
+          </Button>
+          <p className="text-xs text-muted-foreground">The server verifies approval with PayPal before activating the hold.</p>
+        </div>
+      )}
       {cancelled && (
         <Alert>
           <AlertTitle>Approval cancelled</AlertTitle>

@@ -1,9 +1,12 @@
 # Devpost submission copy — draft (English)
 
-> Status: draft, updated 2026-10-18 after the round-2 audit. All claims are
-> grounded in implemented behavior (see VERIFICATION.md). Real-sandbox and
-> live-model evidence must be added once credentials are configured; do not
-> submit before the checkboxes in VERIFICATION.md are closed.
+> Status: draft, updated 2026-10-21. A real AI proposal, PayPal sandbox
+> authorization, $18.50 final partial capture, and separate full release were
+> verified on 2026-10-19 (see VERIFICATION_LIVE.md). Pending/declined payment
+> outcomes were tested locally, not induced externally. A public
+> demo video, judge-access instructions, and entrant attestations remain pending.
+> Dependencies were remediated on 2026-10-21, including Tailwind 4 migration.
+> Current validation and deployment limits are in RELEASE_CHECK.md.
 
 ## Project name
 
@@ -42,15 +45,15 @@ don't have card-hold infrastructure.
 3. When the item comes back, either party files a free-text condition report.
 4. FairHold's AI drafts an **itemized deduction proposal** from the report —
    each line with an amount and a verbatim quote from the report (the server
-   verifies the quote actually appears). Normal wear recorded at checkout is
-   never deducted. The proposal is hard-bounded by the authorized hold, and
+   verifies the quote actually appears). The prompt instructs the model to exclude
+   normal wear and pre-existing damage; the owner must review its judgment. The proposal is hard-bounded by the authorized hold, and
    the server recomputes every total. The proposal is advisory: not
    independent proof of damage, and the amounts are illustrative, not
    verified repair costs.
 5. The **owner reviews and decides** (owner key required): capture the
-   confirmed deduction (PayPal captures exactly that amount; per PayPal's
-   documented final-capture behavior the authorization is voided and the
-   remainder released) or release the hold in full.
+   confirmed deduction as a final capture or release the hold in full.
+   The verified sandbox partial capture returned COMPLETED for the capture
+   and CAPTURED for the authorization; an explicit release uses a void.
 6. Both sides get a truthful receipt — capture ID, verified COMPLETED status,
    and the authorization status as reported by PayPal — plus a complete audit
    timeline. Pending captures are reconciled with PayPal, never assumed.
@@ -69,7 +72,7 @@ don't have card-hold infrastructure.
   reviewable; `PayPal-Request-Id` idempotency plus application-level replay
   protection; over-capture attempts rejected server-side.
 - **AI integration:** OpenAI-compatible chat completions in JSON mode with a
-  versioned prompt (`assessment.v1.2`); zod schema + business-rule validation;
+  versioned prompt (`assessment.v1.3`); zod schema + business-rule validation;
   verbatim evidence-quote verification against the source report; timeout,
   retry, bounded inputs; prompt-injection hardening; failures route to manual
   review, never to a guessed number. The model has no payment tools and no
@@ -115,10 +118,12 @@ was not found in products or public hackathon projects during research
 - A complete, working hold → AI proposal → partial capture/void journey with
   a real state machine, not a mockup — including pending-capture
   reconciliation and role-key-protected payment endpoints.
-- 30 automated tests covering the money rules, capture statuses, AI
+- Automated tests covering the money rules, capture statuses, AI
   validation and quote verification, role enforcement, idempotency replay,
-  and the full API journey.
-- An audit trail a renter could actually use to contest a charge.
+  and the full API journey, plus demo access, cross-site write protection,
+  concurrent payment decisions, and preservation of corrupt stored records.
+- A reviewable event timeline showing the proposal, owner decision, and
+  payment response. A dispute workflow is a future feature.
 
 ## Lessons
 
@@ -140,8 +145,8 @@ per-user scoping; dispute messaging; multi-item holds.
 ## Tools, models, services
 
 PayPal Developer Platform (Orders v2, Payments v2, JS SDK — sandbox);
-OpenAI-compatible LLM API (provider/model configurable, default gpt-4o-mini —
-endpoint and capabilities verified against OpenAI docs 2026-10-18); Node.js,
+OpenAI-compatible LLM API (provider/model configurable; real OpenAI
+gpt-4o-mini output verified 2026-10-19); Node.js,
 Express, React, Vite, Tailwind CSS, shadcn/ui, zod. No sponsor tools used.
 Full inventory and licenses: ATTRIBUTION.md. AI assistance used in
 development: disclosed in ATTRIBUTION.md.

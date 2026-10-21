@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      // shadcn components intentionally export their shared variants/hooks.
+      'react-refresh/only-export-components': ['error', {
+        allowExportNames: ['badgeVariants', 'buttonVariants', 'buttonGroupVariants', 'useFormField', 'navigationMenuTriggerStyle', 'useSidebar', 'toggleVariants'],
+      }],
+    },
+  },
 ])

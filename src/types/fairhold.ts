@@ -88,6 +88,7 @@ export interface AppConfig {
   modes: { paypal: "sandbox" | "simulated"; ai: "live" | "fixture" };
   paypalClientId: string | null;
   maxReportChars: number;
+  canResetDemo: boolean;
 }
 
 export type Role = "owner" | "renter" | null;

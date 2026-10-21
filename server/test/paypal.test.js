@@ -31,10 +31,10 @@ test("simulated adapter enforces the same rules as the real API", async () => {
   const capReplay2 = await pp.captureAuthorization(authR.authorizationId, { amountCents: 2500, idempotencyKey: "cap-1" });
   assert.equal(capReplay.captureId, capReplay2.captureId);
   // A genuinely new capture attempt after a final capture must fail:
-  // final_capture voided the authorization (documented behavior).
+  // The final capture finalized the authorization.
   await assert.rejects(
     () => pp.captureAuthorization(authR.authorizationId, { amountCents: 100, idempotencyKey: "cap-2" }),
-    (err) => err.code === "AUTHORIZATION_VOIDED"
+    (err) => err.code === "AUTHORIZATION_CAPTURED"
   );
 
   // Void after capture is rejected.
@@ -57,12 +57,12 @@ test("simulated adapter reports post-capture authorization truth", async () => {
   const auth = await pp.authorizeOrder(order.orderId, {});
 
   // Partial capture with final capture semantics: authorization becomes
-  // VOIDED (documented final_capture behavior); getCapture/getAuthorization
+  // CAPTURED (observed live sandbox behavior); getCapture/getAuthorization
   // expose the truth instead of local arithmetic.
   const cap = await pp.captureAuthorization(auth.authorizationId, { amountCents: 2000 });
   assert.equal(cap.status, "COMPLETED");
   const authAfter = await pp.getAuthorization(auth.authorizationId);
-  assert.equal(authAfter.status, "VOIDED");
+  assert.equal(authAfter.status, "CAPTURED");
   const capAfter = await pp.getCapture(cap.captureId);
   assert.equal(capAfter.status, "COMPLETED");
   assert.equal(capAfter.amount.value, "20.00");
@@ -79,7 +79,7 @@ test("simulated adapter reports post-capture authorization truth", async () => {
   const capFinal = await pp.getCapture(pending.captureId);
   assert.equal(capFinal.status, "COMPLETED");
   const authFinal = await pp.getAuthorization(auth2.authorizationId);
-  assert.equal(authFinal.status, "VOIDED");
+  assert.equal(authFinal.status, "CAPTURED");
 });
 
 test("sandbox adapter caches tokens and sends PayPal-Request-Id", async () => {
@@ -111,6 +111,23 @@ test("sandbox adapter caches tokens and sends PayPal-Request-Id", async () => {
   const body = JSON.parse(orderCall.opts.body);
   assert.equal(body.intent, "AUTHORIZE");
   assert.equal(body.purchase_units[0].amount.value, "10.00");
+  assert.equal(body.payment_source.paypal.experience_context.return_url, "http://localhost:3000/?paypal_return=1");
+  assert.equal(body.payment_source.paypal.experience_context.cancel_url, "http://localhost:3000/?paypal_cancel=1");
+  assert.equal(body.payment_source.paypal.experience_context.shipping_preference, "NO_SHIPPING");
+});
+
+test("redirect checkout retains PayPal's payer-action approval link and configured return origin", async () => {
+  const requests = [];
+  const fetchImpl = async (url, opts) => {
+    requests.push({ url, opts });
+    if (url.endsWith("/v1/oauth2/token")) return { ok: true, json: async () => ({ access_token: "T", expires_in: 3600 }) };
+    return { ok: true, json: async () => ({ id: "ORDER-R", status: "PAYER_ACTION_REQUIRED", links: [{ rel: "payer-action", href: "https://www.sandbox.paypal.com/checkoutnow?token=ORDER-R" }] }) };
+  };
+  const pp = createSandboxPayPal({ clientId: "id", clientSecret: "s", baseUrl: "https://api-m.sandbox.paypal.com", appBaseUrl: "https://fairhold.example", fetchImpl });
+  const order = await pp.createDepositOrder({ amountCents: 6000, currency: "USD", referenceId: "redirect" });
+  assert.equal(order.approveLink, "https://www.sandbox.paypal.com/checkoutnow?token=ORDER-R");
+  const body = JSON.parse(requests.find(r => r.url.endsWith("/v2/checkout/orders")).opts.body);
+  assert.equal(body.payment_source.paypal.experience_context.return_url, "https://fairhold.example/?paypal_return=1");
 });
 
 test("sandbox adapter maps PayPal error bodies to PayPalError", async () => {

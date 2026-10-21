@@ -7,11 +7,16 @@ tool) place a **PayPal authorization hold** as a deposit — the renter is not
 charged. When the item comes back, an **AI condition proposal** reads the
 return report, compares it against the checkout baseline, and suggests an
 itemized deduction with verbatim evidence quotes. The **owner makes the final
-call** (owner key required): PayPal captures exactly the confirmed amount and,
-per PayPal's documented `final_capture` behavior, the authorization is voided
-and the uncaptured remainder released.
+call** (owner key required): PayPal captures exactly the confirmed amount
+with `final_capture: true`. The receipt displays PayPal's returned capture
+and authorization statuses. The verified sandbox run returned `CAPTURED`
+after a partial final capture; an explicit release uses the void endpoint.
 
 Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
+
+**Release review:** dependency remediation, Tailwind 4 migration, and protected
+judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
+and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -24,18 +29,19 @@ Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
 
 ## Quick start
 
-Prerequisites: **Node.js 20+** and npm. No accounts or keys are required to
+Prerequisites: **Node.js 22.12+** and npm (verified locally with Node.js 24.15.0). No accounts or keys are required to
 explore the app — without credentials it runs in a **clearly labeled**
 simulation/fixture mode.
 
 ```bash
-npm install
+npm ci
 npm run dev        # API on :8787, web UI on http://localhost:3000
 ```
 
 Production-style single-port run:
 
 ```bash
+# In .env, set FAIRHOLD_APP_URL=http://localhost:8787 before checkout.
 npm run build
 npm start          # serves UI + API on http://localhost:8787
 ```
@@ -43,8 +49,10 @@ npm start          # serves UI + API on http://localhost:8787
 Tests and reset:
 
 ```bash
-npm test           # 30 tests: state machine, capture statuses, role keys, AI validation, full API journey
-npm run seed       # reset demo data at any time
+npm test           # state machine, capture statuses, access controls, AI validation, full API journey
+npm run seed       # only local simulated data; refused for sandbox records or production
+npm run check      # lint + tests + build + dependency audit
+npm run smoke      # protected production boot/asset check, no external integration calls
 ```
 
 Real-integration verification (after `.env` is configured and the server is running):
@@ -62,19 +70,21 @@ external calls are never conflated.
 
 All secrets live in a local `.env` file that is git-ignored. **Never paste
 keys into chat, tickets, or commits.**
+Create it by copying `.env.example` to `.env` in the project folder
+(PowerShell: `Copy-Item .env.example .env`), then replace the placeholders.
 
 1. **PayPal sandbox (5 min).** Log in at
    [developer.paypal.com](https://developer.paypal.com/) → *Apps & Credentials*
    → **Sandbox** → *Create App* → copy the **Client ID** and **Secret** into
    `.env` (see `.env.example`). Under *Testing Tools → Sandbox Accounts*, note
-   one **buyer** account's email + password — you'll use it in the approval
-   sheet.
+   one **personal/buyer sandbox** account's email. Use its sandbox password
+   (set it through the account's Change password option if necessary), not
+   your real PayPal account password, in the approval sheet.
 2. **AI model (5 min).** FairHold speaks to any OpenAI-compatible chat
-   completions endpoint. Default: OpenAI `gpt-4o-mini` (verified 2026-10-18:
-   supports Chat Completions and Structured Outputs; note the OpenAI API has
-   no free tier — a small paid balance or any compatible provider works). Put
-   the key in `AI_API_KEY`; override `AI_BASE_URL` / `AI_MODEL` for other
-   providers.
+   completions endpoint. A real OpenAI `gpt-4o-mini` call was verified on
+   2026-10-19. Put the key in `AI_API_KEY`; override `AI_BASE_URL` / `AI_MODEL`
+   for another provider. The provider must support the adapter's chat-completions
+   JSON response mode; billing and model access depend on that provider.
 3. Restart `npm run dev`. The header badges switch from the labeled
    simulation/fixture modes to "PayPal sandbox · live" / "AI model · live".
 
@@ -99,7 +109,7 @@ proposal, `paypal.mode` on each receipt, and `GET /api/health`.
    capture. If PayPal ever returns a pending capture, the app says so and
    reconciles instead of claiming success.
 
-## Payment correctness notes (verified 2026-10-18)
+## Payment correctness notes (sandbox journey verified 2026-10-19)
 
 - `final_capture: true` is sent explicitly on every capture — Payments v2
   defaults it to `false`, which would leave the buyer's hold open.
@@ -107,8 +117,8 @@ proposal, `paypal.mode` on each receipt, and `GET /api/health`.
   an *attention* state with a one-click reconcile (`GET
   /v2/payments/captures/{id}`); `DECLINED`/`FAILED` are errors, not
   resolutions.
-- The receipt's "remainder released" statement comes from PayPal's own
-  authorization status after the capture — not from local subtraction.
+- The receipt shows PayPal's actual authorization status after capture. It
+  does not infer a release or funding-source availability from subtraction.
 - Authorizations are valid 29 days; capture within the 3-day honor period
   (the demo completes in minutes; the expiry timestamp is displayed).
 - Every payment mutation carries a stable `PayPal-Request-Id` (PayPal
@@ -154,7 +164,7 @@ Key design rules (see SPEC.md for the full spec):
   boundary. Authoritative amounts are always computed server-side.
 - Order created ≠ approved ≠ authorized ≠ capture accepted ≠ capture
   COMPLETED. The UI reports success only after PayPal confirms.
-- The prompt is versioned (`server/prompts/assessment.v1.md`, v1.2); the
+- The prompt is versioned (`server/prompts/assessment.v1.md`, v1.3); the
   condition report is treated as untrusted input with injection hardening;
   evidence quotes are verified against the report.
 
@@ -162,12 +172,14 @@ Key design rules (see SPEC.md for the full spec):
 
 - The app runs end-to-end with **zero configuration** in labeled
   simulated/fixture mode (all features exercisable, honestly labeled).
-- To see the real PayPal sandbox flow, sandbox credentials are required. They
-  are **not** in this repository (per the rules, secrets must not be
-  published); they are provided through the Devpost submission's private
-  testing instructions, together with a sandbox buyer account.
-- Project access remains available free of charge through the end of the
-  judging period (Dec 15, 2026 08:00 PT).
+- Real sandbox and live-model results are recorded in `VERIFICATION_LIVE.md`.
+  Reproducing them requires your own sandbox app and AI credentials. This
+  repository contains no credentials.
+- **Submission preparation is in progress:** the demo video and judge-access
+  instructions have not yet been published. Before
+  submission, arrange free runnable access through the judging period
+  specified in the supplied rules (Dec 15, 2026 08:00 PT). Keep server secrets
+  private; do not put API keys in Devpost text or the video.
 
 ## Repository map
 
@@ -175,9 +187,12 @@ Key design rules (see SPEC.md for the full spec):
 |---|---|
 | `RESEARCH.md` | Requirements checklist, deadline verification, candidate research, selection rationale |
 | `SPEC.md` | Implementation specification and acceptance criteria |
-| `VERIFICATION.md` | Audit findings/fixes, what was tested, what still needs credentials |
+| `VERIFICATION.md` | Historical local audit findings and test evidence |
+| `VERIFICATION_LIVE.md` | Actual external AI and PayPal sandbox results |
+| `RELEASE_CHECK.md` | Release checks, dependency remediation, and historical audit |
+| `DEPLOYMENT.md` | Build, server configuration, hosting, and deployed acceptance |
 | `SUBMISSION.md` | Devpost submission copy (draft) |
-| `VIDEO_SCRIPT.md` | Demo video script + shot list (2:40 target) |
+| `VIDEO_BUILD_SCRIPT.md` | Build-to-demo recording script (2:50 target) |
 | `ATTRIBUTION.md` | Dependencies, assets, tools, and AI-assistance record |
 | `server/` | Express API, state machine, PayPal + AI adapters, tests |
 | `src/` | React frontend |
@@ -189,3 +204,15 @@ deployment); demo-scale JSON persistence; sync verification + manual
 reconcile instead of webhooks; sandbox-only payments; fixture AI when no key
 is configured; text-only condition reports (no image analysis yet); AI
 proposals are advisory and based solely on the submitted report.
+
+For a hosted judging demo, `NODE_ENV=production` requires an HTTPS app origin,
+a demo access password of at least 24 characters, and an explicit data path.
+Use durable storage and a single server instance. Shared demo access protects
+the page and API; per-rental role keys still protect payment actions. This
+does not provide tenant isolation. See `DEPLOYMENT.md` and `render.yaml`.
+
+### Checkout without popups
+
+New sandbox orders include PayPal return and cancellation URLs. If the standard PayPal button cannot open its popup, select **Open PayPal in a new tab**, approve using the sandbox personal/buyer account, return to FairHold, and select **Check PayPal approval**. The backend checks PayPal's approval state before authorizing; clicking the check button alone cannot approve a payment.
+
+For local development, the return origin defaults to `http://localhost:3000`. For the single-port production server, set `FAIRHOLD_APP_URL=http://localhost:8787`; for a hosted demo, set it to the demo's HTTPS origin before creating orders. Already-created orders retain their original return URLs.

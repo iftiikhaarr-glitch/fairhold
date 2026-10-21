@@ -30,7 +30,7 @@ export class PayPalError extends Error {
 // Real sandbox adapter
 // ---------------------------------------------------------------------------
 
-export function createSandboxPayPal({ clientId, clientSecret, baseUrl, fetchImpl = fetch }) {
+export function createSandboxPayPal({ clientId, clientSecret, baseUrl, appBaseUrl = "http://localhost:3000", fetchImpl = fetch }) {
   let token = null;
   let tokenExpiresAt = 0;
 
@@ -93,6 +93,17 @@ export function createSandboxPayPal({ clientId, clientSecret, baseUrl, fetchImpl
         idempotencyKey: idempotencyKey || `order-${referenceId}`,
         body: {
           intent: "AUTHORIZE",
+          payment_source: {
+            paypal: {
+              experience_context: {
+                brand_name: "FairHold",
+                shipping_preference: "NO_SHIPPING",
+                user_action: "CONTINUE",
+                return_url: new URL("/?paypal_return=1", appBaseUrl).href,
+                cancel_url: new URL("/?paypal_cancel=1", appBaseUrl).href,
+              },
+            },
+          },
           purchase_units: [
             {
               reference_id: referenceId,
@@ -102,7 +113,7 @@ export function createSandboxPayPal({ clientId, clientSecret, baseUrl, fetchImpl
           ],
         },
       });
-      const approve = (order.links || []).find((l) => l.rel === "approve");
+      const approve = (order.links || []).find((l) => l.rel === "payer-action" || l.rel === "approve");
       return { orderId: order.id, status: order.status, approveLink: approve ? approve.href : null };
     },
 
@@ -237,6 +248,8 @@ export function createSimulatedPayPal({ currency = "USD" } = {}) {
         if (!auth) throw new PayPalError("Authorization not found", { status: 404, code: "RESOURCE_NOT_FOUND" });
         if (auth.status === "VOIDED")
           throw new PayPalError("Authorization was voided", { status: 422, code: "AUTHORIZATION_VOIDED" });
+        if (auth.status === "CAPTURED")
+          throw new PayPalError("Authorization was finalized by a capture", { status: 422, code: "AUTHORIZATION_CAPTURED" });
         if (amountCents > auth.amountCents - auth.capturedCents)
           throw new PayPalError("Capture amount exceeds authorized amount", {
             status: 422,
@@ -255,12 +268,9 @@ export function createSimulatedPayPal({ currency = "USD" } = {}) {
         captures.set(capture.id, capture);
         if (status === "COMPLETED") {
           auth.capturedCents += amountCents;
-          // Documented behavior (PayPal v1→v2 migration guide, 2026-10-18): a
-          // capture with final_capture=true voids the authorization, i.e. the
-          // uncaptured remainder is released. Exact status string shown by
-          // GET authorization in the live sandbox is still to be confirmed;
-          // the sim reports "VOIDED".
-          auth.status = "VOIDED";
+          // Match the authorization status observed after a real sandbox
+          // partial final capture on 2026-10-19. An explicit void remains VOIDED.
+          auth.status = "CAPTURED";
         }
         return {
           captureId: capture.id,
@@ -305,7 +315,7 @@ export function createSimulatedPayPal({ currency = "USD" } = {}) {
       if (status === "COMPLETED") {
         const auth = authorizations.get(capture.authorizationId);
         auth.capturedCents += capture.amountCents;
-        auth.status = "VOIDED";
+        auth.status = "CAPTURED";
       }
     },
 

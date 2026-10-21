@@ -9,7 +9,10 @@ export function createStore(file) {
   function load() {
     try {
       state = JSON.parse(fs.readFileSync(file, "utf8"));
-    } catch {
+    } catch (err) {
+      // Never replace existing payment records because a file is corrupt or
+      // unreadable. Only a genuinely absent store starts empty.
+      if (err.code !== "ENOENT") throw err;
       persist();
     }
   }

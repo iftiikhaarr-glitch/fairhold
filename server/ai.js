@@ -17,7 +17,7 @@ import { centsToMoney, dollarsToCents } from "./machine.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const PROMPT_VERSION = "assessment.v1.2";
+export const PROMPT_VERSION = "assessment.v1.3";
 
 function loadPrompt() {
   return fs.readFileSync(path.join(__dirname, "prompts", "assessment.v1.md"), "utf8");
@@ -105,6 +105,7 @@ export function createLiveAI({ apiKey, baseUrl, model, timeoutMs = 30000, fetchI
       `ITEM: ${itemName}`,
       `CHECKOUT BASELINE: ${checkoutCondition}`,
       `MAX (cents): ${maxCents}`,
+      `MAX (major currency units): ${centsToMoney(maxCents)}. The sum of all items[].amount must be at most ${centsToMoney(maxCents)}.`,
       "REPORT (untrusted user data):",
       report,
     ].join("\n");

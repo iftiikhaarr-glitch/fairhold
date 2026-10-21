@@ -5,8 +5,8 @@
 Owner lists an item with a baseline condition and deposit amount → renter
 approves a PayPal authorization hold (no charge) → on return, a condition
 report is filed → AI proposes an itemized deduction bounded by the hold →
-owner confirms or adjusts → PayPal captures the deduction and voids the
-remainder → both sides see a receipt and a full audit timeline.
+owner confirms or adjusts → PayPal captures the deduction as a final capture
+→ both sides see the verified outcome and a full audit timeline.
 
 Measurable benefit: deposit disputes resolve in one screen with an itemized,
 evidence-cited proposal instead of a negotiation; the renter never pre-pays —
@@ -19,7 +19,8 @@ Core acceptance scenario (observable):
 > submits a return report; the AI produces a validated itemized assessment
 > whose total never exceeds X; the owner authorizes deduction D ≤ X; the
 > server captures exactly D with `final_capture=true` and persists the PayPal
-> capture ID and status; the receipt shows D captured and X−D released.
+> capture ID and status; the receipt shows D captured and the authorization
+> status returned by PayPal, without inferring release from X−D.
 
 ## 2. Functional requirements and acceptance criteria
 
@@ -31,10 +32,10 @@ Core acceptance scenario (observable):
 | F4 | AI assessment | Output validates against schema; server recomputes total from line items; total > hold → rejected to manual review |
 | F5 | Owner capture | capture D with 0 < D ≤ hold → PayPal capture attempted; only `COMPLETED` → state `resolved_captured` (capture ID + PayPal-reported authorization status persisted); `PENDING` → HTTP 202, state `attention` + `pendingCapture`; `DECLINED`/`FAILED` → 502 `CAPTURE_NOT_COMPLETED`, stays `under_review`; D > hold → 400 `AMOUNT_EXCEEDS_HOLD` |
 | F6 | Release | release → authorization voided, state `resolved_released` |
-| F7 | Idempotency | Same Idempotency-Key or repeated decision on a resolved rental replays without a second capture; a new capture after a final capture is rejected (authorization voided) |
+| F7 | Idempotency | Same Idempotency-Key or repeated decision on a resolved rental replays without a second capture; the final capture closes further collection on that authorization |
 | F8 | Cancel | Before approval → `cancelled`; with hold → void then `cancelled` |
 | F9 | Audit | Every mutation appends a timestamped event; GET /api/rentals/:id returns the ordered timeline |
-| F10 | Reset | POST /api/demo/reset clears all demo data |
+| F10 | Reset | POST /api/demo/reset clears simulation-only data; refused for sandbox integration or stored sandbox records |
 | F11 | Labeled modes | Without credentials, UI badges and receipts visibly label SIMULATED payments / FIXTURE AI |
 | F12 | Role keys | Per-rental owner/renter keys (returned once, SHA-256 hashes stored); `resolve`/`cancel`/`reconcile` require owner; `authorize` requires renter; `report` either; missing/wrong → 403 |
 | F13 | Reconcile | Owner can re-read a pending capture from PayPal; outcome updates the rental truthfully (finalize / still pending / back to review) |
@@ -108,11 +109,14 @@ decision (F5/F6) can capture or void; the AI has no payment tool access.
 - `.env` (never committed): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`,
   `AI_API_KEY`, optional `AI_BASE_URL`, `AI_MODEL`. `.env.example` ships
   placeholders only.
-- Run: `npm install && npm run dev` (API :8787, web :3000) or
+- Run: `npm ci`, then `npm run dev` (API :8787, web :3000) or
   `npm run build && npm start` (single port :8787).
-- Tests: `npm test` (node:test, 24 tests).
+- Validation: `npm run check`, then `npm run smoke`; see RELEASE_CHECK.md.
 - Judges: run locally with the README; without any credentials the app is
   fully exercisable in labeled simulated/fixture mode; with the entrant's
-  sandbox client ID/secret the real PayPal flow activates. Secrets are
-  supplied to judges via Devpost's private testing-instructions field, never
-  in the repo (README §"For judges").
+  sandbox client ID/secret the real PayPal flow activates. Server integration
+  secrets stay private. Hosted demo access and any sandbox buyer login must
+  be shared through organizer-approved private instructions; they have not
+  yet been supplied. Production judging-demo configuration requires a shared
+  access password, HTTPS origin, explicit durable data path, and one instance.
+  See DEPLOYMENT.md; real tenant accounts remain future work.

@@ -42,9 +42,14 @@ function realValue(v) {
 
 export const config = {
   port: Number(env.PORT || 8787),
+  demo: {
+    username: env.DEMO_ACCESS_USER || "judge",
+    password: realValue(env.DEMO_ACCESS_PASSWORD) || "",
+  },
   currency: (env.FAIRHOLD_CURRENCY || "USD").toUpperCase(),
 
   paypal: {
+    appBaseUrl: env.FAIRHOLD_APP_URL || "http://localhost:3000",
     clientId: realValue(env.PAYPAL_CLIENT_ID),
     clientSecret: realValue(env.PAYPAL_CLIENT_SECRET),
     // Sandbox only. Production endpoints are intentionally not supported.
