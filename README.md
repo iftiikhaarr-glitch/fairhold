@@ -1,5 +1,7 @@
 # FairHold
 
+[![Verify FairHold](https://github.com/iftiikhaarr-glitch/fairhold/actions/workflows/ci.yml/badge.svg)](https://github.com/iftiikhaarr-glitch/fairhold/actions/workflows/ci.yml)
+
 **AI-assisted refundable deposits on PayPal — hold now, propose fairly, and let the owner settle when the item comes back.**
 
 FairHold lets anyone lending or renting out an item (a tent, a camera, a power

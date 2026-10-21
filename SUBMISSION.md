@@ -12,6 +12,10 @@
 
 FairHold
 
+Source: https://github.com/iftiikhaarr-glitch/fairhold
+
+Video and hosted-demo links: pending; do not submit placeholder URLs.
+
 ## Elevator pitch
 
 Refundable deposits that resolve fairly: a PayPal hold at checkout, an

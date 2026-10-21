@@ -8,7 +8,9 @@ This project's code, documentation, and test suite were drafted with AI
 assistance (Kimi Work agent, Moonshot AI) acting on the entrant's
 instructions, during the hackathon submission period. OpenAI Codex also
 assisted with credential setup, debugging the checkout redirect and amount
-handling, sandbox verification, regression tests, and release documentation. The concept, product
+handling, sandbox verification, regression tests, dependency remediation,
+Tailwind migration, demo access controls, CI and deployment configuration,
+recording scripts, and release documentation. The concept, product
 decisions, and review remain the entrant's responsibility. The entrant must
 review the Official Rules §4 (Intellectual Property / third-party assistance:
 "Submission components are solely the Entrant's work product and the result

@@ -49,6 +49,13 @@ original return URLs; use a new order after changing the origin.
 The Blueprint uses a **paid service and a 1 GB persistent disk**. Review the
 provider's displayed recurring cost and agree a budget before creating it.
 No hosting purchase is required just to review or publish this repository.
+Pricing checked on 21 October 2026 lists $7/month for `0.5c-512mb` and
+$0.25/GB-month for persistent disks: **$7.25/month base hosting** for this
+configuration on the $0 workspace plan. Taxes, traffic/build overages, and AI
+provider charges are additional. This estimate is not a hard billing cap;
+confirm the provider's actual checkout before provisioning. See
+[Render pricing](https://render.com/pricing).
+
 The JSON store requires one application process and one instance; do not scale
 it horizontally. A free ephemeral filesystem can lose payment state on restart
 and is not the deployment proposed here.

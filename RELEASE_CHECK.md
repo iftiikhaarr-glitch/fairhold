@@ -22,6 +22,11 @@
 - GitHub CI repeats installation, all release checks, and the production smoke
   test. DEPLOYMENT.md and render.yaml define a proposed protected server with
   durable storage. Hosting has not been provisioned or verified.
+- A fresh local Git clone passed `npm ci`, all 40 tests, lint, build, the zero-
+  finding audit, and protected production smoke. GitHub's first Linux CI run
+  also passed. Its deprecated action-runtime warning was addressed by pinning
+  current official checkout/setup-node releases using Node 24 and selecting
+  Ubuntu 24.04 explicitly; the workflow records the current run's result.
 
 Zero audit findings is a point-in-time registry result, not a guarantee of
 security. Real tenant accounts, database transactions, webhooks, broader threat
