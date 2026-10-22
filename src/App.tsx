@@ -97,8 +97,8 @@ export default function App() {
               onKeyDown={(e) => e.key === "Enter" && (setCreating(false), setSelectedId(r.id))}
               className={`min-w-0 cursor-pointer transition-colors ${selectedId === r.id ? "border-primary" : "hover:border-muted-foreground/40"}`}
             >
-              <CardContent className="p-3 grid gap-1">
-                <div className="flex items-center justify-between gap-2">
+              <CardContent className="p-3 min-w-0 grid grid-cols-[minmax(0,1fr)] gap-1">
+                <div className="flex min-w-0 items-center justify-between gap-2">
                   <span className="min-w-0 flex-1 text-sm font-medium truncate">{r.itemName}</span>
                   <Badge variant="outline" className="shrink-0 text-xs">{r.state.replace(/_/g, " ")}</Badge>
                 </div>

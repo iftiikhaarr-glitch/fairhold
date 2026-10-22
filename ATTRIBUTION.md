@@ -1,6 +1,6 @@
 # Attribution record
 
-Prepared 2026-10-18; updated 2026-10-21 for the PayPal AI Hackathon submission.
+Prepared 2026-10-18; updated 2026-10-22 for the PayPal AI Hackathon submission.
 
 ## Development assistance
 
@@ -10,7 +10,8 @@ instructions, during the hackathon submission period. OpenAI Codex also
 assisted with credential setup, debugging the checkout redirect and amount
 handling, sandbox verification, regression tests, dependency remediation,
 Tailwind migration, demo access controls, CI and deployment configuration,
-recording scripts, and release documentation. The concept, product
+recording scripts, PostgreSQL transactions and concurrency control, secure web
+sign-in, Replit publishing, hosted integration checks, and release documentation. The concept, product
 decisions, and review remain the entrant's responsibility. The entrant must
 review the Official Rules §4 (Intellectual Property / third-party assistance:
 "Submission components are solely the Entrant's work product and the result
@@ -25,14 +26,15 @@ RELEASE_CHECK.md.
 | Package | License | Use |
 |---|---|---|
 | express (4.x) | MIT | HTTP API server |
+| pg (8.x) | MIT | PostgreSQL connections, transactions and persistence |
 | zod (4.x) | MIT | AI output schema validation |
 | react / react-dom (19.x) | MIT | Frontend |
 | react-router (7.x) | MIT | Frontend routing shell |
 | tailwindcss (4.3) + @tailwindcss/vite + tailwindcss-animate | MIT | Styling and build integration |
 | shadcn/ui component code (Radix UI primitives, class-variance-authority, clsx, tailwind-merge, lucide-react icons, sonner, etc.) | MIT (each) | UI components (vendored source pattern) |
 
-Dev dependencies include Vite, TypeScript, ESLint, concurrently, PostCSS,
-autoprefixer, and @types/*. The table summarizes principal dependencies; it
+Dev dependencies include Vite, TypeScript, ESLint, concurrently,
+and @types/*. The table summarizes principal dependencies; it
 is not a complete transitive license audit. Preserve upstream license notices
 when redistributing dependencies. The project source uses the included MIT license.
 
@@ -42,10 +44,12 @@ when redistributing dependencies. The project source uses the included MIT licen
 |---|---|---|
 | PayPal Developer Platform — Orders v2, Payments v2, JS SDK (sandbox only) | PayPal Developer Agreement | Deposit hold / partial capture / void |
 | OpenAI-compatible chat-completions API (provider and model via env config; default gpt-4o-mini) | Provider terms | Condition assessment |
+| Replit | Replit account and hosting terms | Protected Node service and production PostgreSQL |
 
 ## Sponsor tools
 
-None used. No sponsor prize is claimed.
+Hosting uses Replit. The optional Render deployment was not activated.
+Sponsor-prize selections remain for the entrant's review before submission.
 
 ## Assets
 

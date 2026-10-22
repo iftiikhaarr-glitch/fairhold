@@ -35,11 +35,12 @@ Core acceptance scenario (observable):
 | F7 | Idempotency | Same Idempotency-Key or repeated decision on a resolved rental replays without a second capture; the final capture closes further collection on that authorization |
 | F8 | Cancel | Before approval → `cancelled`; with hold → void then `cancelled` |
 | F9 | Audit | Every mutation appends a timestamped event; GET /api/rentals/:id returns the ordered timeline |
-| F10 | Reset | POST /api/demo/reset clears simulation-only data; refused for sandbox integration or stored sandbox records |
+| F10 | Reset | POST /api/demo/reset clears local JSON simulation-only data; refused for PostgreSQL storage, sandbox integration or stored sandbox records |
 | F11 | Labeled modes | Without credentials, UI badges and receipts visibly label SIMULATED payments / FIXTURE AI |
 | F12 | Role keys | Per-rental owner/renter keys (returned once, SHA-256 hashes stored); `resolve`/`cancel`/`reconcile` require owner; `authorize` requires renter; `report` either; missing/wrong → 403 |
 | F13 | Reconcile | Owner can re-read a pending capture from PayPal; outcome updates the rental truthfully (finalize / still pending / back to review) |
 | F14 | Evidence verification | Each AI evidence quote is checked verbatim against the submitted report and flagged `true/false/null` in the UI |
+| F15 | Durable hosted mutations | PostgreSQL transactions persist rental state, events, role hashes and replay results before a successful HTTP response; advisory locks coordinate competing rental mutations across processes |
 
 ## 3. Screens and interaction states
 
@@ -69,12 +70,13 @@ reported only after the PayPal capture/void call returns a success status.
 ## 5. AI inputs, outputs, permissions, failure handling
 
 - Input: item name, checkout baseline, return report (bounded to 4000 chars),
-  max deduction in cents. No credentials, payment tokens, or PII beyond first
-  names enter the model context.
+  max deduction in cents. The server does not add credentials or payment
+  tokens to model context. The demo uses synthetic reports; free-text input
+  is not automatically scrubbed of personal information.
 - Output: strict JSON `{summary, confidence, items[{label, amount, evidence}]}`
   validated with zod + business rules; total recomputed server-side; the model
   never sets authoritative amounts and never calls payment tools.
-- Prompt: `server/prompts/assessment.v1.md`, versioned (`assessment.v1.1`),
+- Prompt: `server/prompts/assessment.v1.md`, versioned (`assessment.v1.3`),
   contains explicit injection hardening; report is framed as untrusted data.
 - Failure: timeout 30s, one retry, invalid JSON/schema/over-limit → rental
   moves to `under_review` with `assessmentError` (manual review), never a
@@ -90,9 +92,16 @@ reported only after the PayPal capture/void call returns a success status.
   code. Sync verification via API responses; webhooks are intentionally out of
   scope for the demo (documented limitation).
 - AI: any OpenAI-compatible chat-completions endpoint via env config.
-- Persistence: JSON file with atomic writes (demo-scale; see limitations).
+- Persistence: PostgreSQL transactions and rental advisory locks on Replit;
+  local JSON with atomic writes for zero-key setup. JSON hosting requires one
+  application process and durable filesystem storage.
 
 ## 7. Authentication and authorization
+
+The hosted judging workspace has a shared private demo login. Browser sign-in
+creates an eight-hour signed HttpOnly/Secure/SameSite=Lax cookie on HTTPS;
+API scripts may use Basic authorization. Cross-site writes are refused.
+This gate does not provide per-user tenant isolation.
 
 Demo-grade capability security: each rental gets an owner key and a renter
 key (192-bit random, returned once, SHA-256 hashes stored). Payment-changing
@@ -117,6 +126,7 @@ decision (F5/F6) can capture or void; the AI has no payment tool access.
   sandbox client ID/secret the real PayPal flow activates. Server integration
   secrets stay private. Hosted demo access and any sandbox buyer login must
   be shared through organizer-approved private instructions; they have not
-  yet been supplied. Production judging-demo configuration requires a shared
-  access password, HTTPS origin, explicit durable data path, and one instance.
+  yet been supplied to judges. Production judging-demo configuration requires a
+  shared access password, HTTPS origin, and durable storage: PostgreSQL on
+  Replit, or an explicit durable data path and one instance for JSON hosting.
   See DEPLOYMENT.md; real tenant accounts remain future work.

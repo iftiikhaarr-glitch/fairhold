@@ -171,8 +171,9 @@ durable database transactions, and a further security review.
 - Existing `verify:live` is intended for an unprotected local development
   server. Scripts against the protected host also need Basic authorization.
 
-Hosted checks remain pending until a service actually exists. Do not mark
-them passed from local tests or the previous sandbox run.
+Completed hosted checks are recorded in `VERIFICATION_HOSTED.md` and
+`REPLIT_STATUS.md`. Keep new deployment results separate from local tests and
+the earlier sandbox run; configuration alone does not verify an integration.
 
 ## Recording
 
