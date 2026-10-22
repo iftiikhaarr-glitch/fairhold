@@ -2,6 +2,24 @@
 
 ## Current revision
 
+### Completed hosted release — 22 October
+
+Runtime `eafa0410588150e367c0642357f016aaaf3633be` passed
+[CI](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39755812186):
+49 tests including real PostgreSQL, lint, build, zero-finding audit and protected
+startup smoke. It is published as Replit build
+`60e1c85b-3b70-4e82-a919-bbf61632352b`, with a source-identical publishing
+checkpoint. The final post-publish check confirmed completed capture/release
+records, event history and same-capture replay survive redeployment.
+
+The nested sidebar layout correction was visually checked using a clearly
+labeled local synthetic fixture before publishing. Server integration modes
+and external payment results were verified separately on the real hosted app.
+See VERIFICATION_HOSTED.md and REPLIT_STATUS.md. Source and Git history scans
+exclude configured provider credentials, the demo password and private rental
+keys. The video script is ready; a recorded public video and Devpost submission
+remain separate entrant steps.
+
 ### Web sign-in update — 22 October
 
 Runtime revision `2675da2f85e91cf75002909c8f485c40bec2b712` replaces the

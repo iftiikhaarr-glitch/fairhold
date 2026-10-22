@@ -4,13 +4,13 @@ This status supersedes the original checklist in REPLIT_HANDOFF.md.
 
 - Published app: https://fairhold.replit.app/
 - Project: https://replit.com/@iftiikhaarr/fairhold
-- Reviewed runtime: `2675da2f85e91cf75002909c8f485c40bec2b712`.
-- [CI](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39588960180)
+- Reviewed runtime: `eafa0410588150e367c0642357f016aaaf3633be`.
+- [CI](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39755812186)
   passed 49 tests including real PostgreSQL 16, lint, build, zero-finding audit,
   and protected startup smoke. Replit passed 43 tests with its database CI
   suite explicitly skipped, plus lint/build/audit/smoke.
-- Replit deployment build `7424400b-1db8-4571-bd27-8774afd999ef` is live.
-  Its checkpoint `0a338772709825acddda18b134ea192019b9e403` has the same source
+- Replit deployment build `60e1c85b-3b70-4e82-a919-bbf61632352b` is live.
+  Its checkpoint `6a826089a9d1f5b5732f08ab40db3f51d15632f3` has the same source
   tree as the reviewed runtime. Replit creates empty publishing checkpoints;
   inspect them and rebase before pulling later source updates rather than
   discarding changes or forcing remote history.
@@ -45,8 +45,12 @@ hosted origin. The verified outcomes are:
 - Separate $40 authorization `17L72039E42510049` released; a direct PayPal read
   confirmed VOIDED.
 
-Final post-capture redeployment/replay verification is next. Keep database
-copying disabled. Preserve redacted evidence and keep rental keys private.
+Post-capture redeployment/replay verification passed after the final publish:
+both terminal outcomes, event history, and the original capture ID persisted.
+No second capture occurred. A browser review also corrected nested sidebar
+grid sizing for long rental names and verified it locally before publishing.
+Keep database copying disabled on future redeploys. Preserve redacted evidence
+and keep rental keys private.
 
 Private local verification helpers and judging access exist only in the
 operator's workspace, outside this public repository. The user need not paste

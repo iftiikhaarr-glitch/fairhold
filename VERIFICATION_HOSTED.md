@@ -10,5 +10,6 @@ Host: https://fairhold.replit.app
 - Hosted live model proposal: $35.00, 2 items, quotation verification flags [true,true].
 - Owner-confirmed $18.50 capture 0DP41918HN8876100: COMPLETED; post-capture authorization status CAPTURED. Retry replayed the same capture. Missing/renter role keys returned 403, over-limit returned 400, reset returned 409.
 - Separate hosted $40 authorization 17L72039E42510049 was released; direct PayPal read confirmed VOIDED.
+- After a verified Replit redeployment, capture/release records and event history persisted; retry still returned capture 0DP41918HN8876100.
 
 Sandbox only. Pending/declined exceptional outcomes remain regression-tested, not induced external cases.
