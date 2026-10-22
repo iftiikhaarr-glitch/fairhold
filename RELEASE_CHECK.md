@@ -2,6 +2,28 @@
 
 ## Current revision
 
+### Web sign-in update — 22 October
+
+Runtime revision `2675da2f85e91cf75002909c8f485c40bec2b712` replaces the
+browser's HTTP-auth prompt with a standard protected-demo sign-in form, retaining
+Basic authorization for API scripts. HTTPS sessions use signed, eight-hour
+HttpOnly/Secure/SameSite=Lax cookies. Tests cover altered/expired cookies,
+wrong passwords, checkout query preservation, external redirect refusal,
+cross-site writes, and clearing the browser cookie on sign-out.
+
+[Linux CI](https://github.com/iftiikhaarr-glitch/fairhold/actions/runs/39588960180)
+passed **49 tests** including PostgreSQL, lint, production build, zero-finding
+audit, and protected startup smoke. The Replit workspace passed 43 tests with
+the PostgreSQL CI suite explicitly skipped, plus build, lint, audit, and smoke.
+The published Replit checkpoint can have a different commit ID; its source
+tree was checked against the reviewed runtime revision before deployment.
+
+The initial hosted deployment passed HTTPS health, PostgreSQL mode, protected
+page/API checks and authenticated built-asset requests. It created real sandbox
+orders and cancelled one before approval. The original unapproved checkout
+expired overnight and was cancelled locally; fresh orders are being used.
+Hosted capture/release and post-update browser checks are in progress.
+
 ### Replit persistence update
 
 Runtime revision `f2f518e8cc70e38ad64025a2d17bac153b958f2f` adds

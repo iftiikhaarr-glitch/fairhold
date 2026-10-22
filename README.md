@@ -20,8 +20,11 @@ Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
 judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
 and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
-**Replit continuation:** read `REPLIT_HANDOFF.md` before importing or publishing.
-PostgreSQL storage is implemented and tested; hosted Replit verification is in progress.
+**Hosted judging demo:** [fairhold.replit.app](https://fairhold.replit.app/),
+protected by a private demo login supplied by the entrant. PostgreSQL storage
+is implemented and tested. See `REPLIT_HANDOFF.md` and the verification records
+for the latest completed checks; a configured integration badge alone does not
+establish a successful provider transaction.
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -181,7 +184,8 @@ Key design rules (see SPEC.md for the full spec):
   Reproducing them requires your own sandbox app and AI credentials. This
   repository contains no credentials.
 - **Submission preparation is in progress:** the demo video and judge-access
-  instructions have not yet been published. Before
+  instructions are being finalized. The recording script is in
+  `VIDEO_BUILD_SCRIPT.md`; a completed video is not yet published. Before
   submission, arrange free runnable access through the judging period
   specified in the supplied rules (Dec 15, 2026 08:00 PT). Keep server secrets
   private; do not put API keys in Devpost text or the video.

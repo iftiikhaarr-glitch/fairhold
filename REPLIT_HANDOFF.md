@@ -1,5 +1,8 @@
 # FairHold: continue on Replit without rebuilding
 
+**Latest status:** read [REPLIT_STATUS.md](REPLIT_STATUS.md). The app is now
+published with verified browser sign-in; the older checklist below is historical.
+
 Prepared 21 October 2026. Read this before changing deployment or storage.
 
 ## Original source baseline (historical)
