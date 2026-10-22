@@ -27,22 +27,26 @@ This status supersedes the original checklist in REPLIT_HANDOFF.md.
   A hosted check verified cookie API access, cross-site write refusal, sign-out,
   and survival of existing production rental records after redeployment.
 
-## Integration verification remaining
+## Hosted integration results — 22 October
 
-Hosted capture/release verification is **not yet complete**. The original
+Hosted capture/release verification completed successfully. The original
 unapproved checkout became unavailable overnight (`INVALID_RESOURCE_ID` from
 PayPal). Those unapproved local records were cancelled; fresh synthetic $60
 and $40 orders were created. A separate pre-approval cancellation succeeded.
-The user was asked to log in to the fresh $60 sandbox checkout. Do not retry
-the old order. If the fresh order also expires before approval, inspect its
-state and replace only unapproved records; do not discard active holds.
+The user signed into the fresh checkout, and approval returned to the actual
+hosted origin. The verified outcomes are:
 
-After sandbox login: finish payer approval, verify authorization through the
-hosted API, submit the sample report to the real model, have the owner confirm
-$18.50, record actual capture/authorization statuses, and check replay and role
-refusals. Approve the separate $40 order and verify full void. Then republish
-without copying development data and verify terminal records, event history,
-and replay persist. Preserve all redacted evidence; keep rental keys private.
+- $60 authorization `43E13350TW0867231`.
+- Real model proposal $35.00, two items, both quotation matches verified.
+- Owner-confirmed $18.50 capture `0DP41918HN8876100`: COMPLETED, final capture;
+  PayPal reported authorization status CAPTURED. No remainder release is inferred.
+- Same-key retry returned the same capture; missing/renter keys returned 403,
+  over-limit amount returned 400, and reset returned 409.
+- Separate $40 authorization `17L72039E42510049` released; a direct PayPal read
+  confirmed VOIDED.
+
+Final post-capture redeployment/replay verification is next. Keep database
+copying disabled. Preserve redacted evidence and keep rental keys private.
 
 Private local verification helpers and judging access exist only in the
 operator's workspace, outside this public repository. The user need not paste
@@ -53,4 +57,4 @@ The 2:50 recording script is in VIDEO_BUILD_SCRIPT.md. A finished public video
 has not been recorded/uploaded here. Devpost submission awaits the user's
 later explicit authorization; do not make eligibility or ownership attestations
 for them. Historical real external tests remain in VERIFICATION_LIVE.md and
-must not be confused with the pending hosted payment checks.
+remain distinct from the hosted evidence in VERIFICATION_HOSTED.md.

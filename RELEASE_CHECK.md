@@ -22,7 +22,13 @@ The initial hosted deployment passed HTTPS health, PostgreSQL mode, protected
 page/API checks and authenticated built-asset requests. It created real sandbox
 orders and cancelled one before approval. The original unapproved checkout
 expired overnight and was cancelled locally; fresh orders are being used.
-Hosted capture/release and post-update browser checks are in progress.
+Hosted web sign-in, cookie access, cross-site refusal, and persistence after the
+sign-in redeployment passed. On 22 October, the actual hosted $60 authorization,
+real $35 AI proposal with both quotes verified, $18.50 COMPLETED capture and
+same-capture retry, role/amount/reset refusals, and separate $40 VOIDED release
+also passed. See VERIFICATION_HOSTED.md. A browser review found long rental
+names extending sidebar cards beyond their fixed column; the grid and flex
+minimum widths were corrected. The final redeployment checks follow separately.
 
 ### Replit persistence update
 

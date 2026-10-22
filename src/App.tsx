@@ -84,7 +84,7 @@ export default function App() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="grid gap-6 md:grid-cols-[280px_1fr] items-start">
-        <aside className="grid gap-3">
+        <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
           <Button variant={creating || !selected ? "default" : "outline"} onClick={() => { setCreating(true); setSelectedId(null); setPendingKeys(null); }}>
             + New deposit hold
           </Button>
@@ -95,11 +95,11 @@ export default function App() {
               tabIndex={0}
               onClick={() => { setCreating(false); setPendingKeys(null); setSelectedId(r.id); }}
               onKeyDown={(e) => e.key === "Enter" && (setCreating(false), setSelectedId(r.id))}
-              className={`cursor-pointer transition-colors ${selectedId === r.id ? "border-primary" : "hover:border-muted-foreground/40"}`}
+              className={`min-w-0 cursor-pointer transition-colors ${selectedId === r.id ? "border-primary" : "hover:border-muted-foreground/40"}`}
             >
               <CardContent className="p-3 grid gap-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium truncate">{r.itemName}</span>
+                  <span className="min-w-0 flex-1 text-sm font-medium truncate">{r.itemName}</span>
                   <Badge variant="outline" className="shrink-0 text-xs">{r.state.replace(/_/g, " ")}</Badge>
                 </div>
                 <span className="text-xs text-muted-foreground">

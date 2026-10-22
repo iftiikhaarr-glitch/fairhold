@@ -1,8 +1,9 @@
 # Devpost submission copy — draft (English)
 
-> Status: draft, updated 2026-10-21. A real AI proposal, PayPal sandbox
+> Status: draft, updated 2026-10-22. A real AI proposal, PayPal sandbox
 > authorization, $18.50 final partial capture, and separate full release were
-> verified on 2026-10-19 (see VERIFICATION_LIVE.md). Pending/declined payment
+> verified on the hosted Replit app on 2026-10-22 (see VERIFICATION_HOSTED.md).
+> Earlier external evidence is in VERIFICATION_LIVE.md. Pending/declined payment
 > outcomes were tested locally, not induced externally. A public
 > demo video, judge-access instructions, and entrant attestations remain pending.
 > Dependencies were remediated on 2026-10-21, including Tailwind 4 migration.
@@ -14,7 +15,9 @@ FairHold
 
 Source: https://github.com/iftiikhaarr-glitch/fairhold
 
-Video and hosted-demo links: pending; do not submit placeholder URLs.
+Hosted demo: https://fairhold.replit.app/ (private judging login supplied separately).
+
+Public video link: pending; do not submit a placeholder URL.
 
 ## Elevator pitch
 
@@ -67,8 +70,9 @@ don't have card-hold infrastructure.
 - **Frontend:** React + TypeScript + Vite + Tailwind + shadcn/ui; PayPal JS
   SDK with `intent=authorize` for the approval sheet.
 - **Backend:** Node + Express. A pure, unit-tested deposit state machine; a
-  PayPal adapter (Orders v2 + Payments v2, sandbox); an AI adapter; JSON
-  persistence with atomic writes; money as integer cents.
+  PayPal adapter (Orders v2 + Payments v2, sandbox); an AI adapter; PostgreSQL
+  transactions and rental advisory locks on Replit, with JSON persistence for
+  local setup; money as integer cents. Successful mutations wait for database commit.
 - **PayPal integration:** `intent=AUTHORIZE` orders; partial capture with
   `final_capture: true` sent explicitly (v2 defaults it to false); void for
   releases; capture statuses checked explicitly — only COMPLETED resolves,
@@ -83,7 +87,8 @@ don't have card-hold infrastructure.
   secrets in context.
 - **Security (demo grade):** per-rental owner/renter capability keys protect
   payment-changing endpoints; only key hashes are stored; secrets stay
-  server-side. (Roadmap: accounts/OAuth before public deployment.)
+  server-side. The judging demo adds a private login and expiring secure cookie.
+  Accounts/OAuth and tenant isolation are required before customer deployment.
 
 ## Meaningful PayPal + AI usage
 
@@ -140,7 +145,7 @@ beat clever prompts.
 ## Limitations and next steps
 
 Current limits: sandbox-only payments; demo-grade role keys rather than
-accounts; demo-scale JSON storage; sync verification + manual reconcile
+accounts; shared judging workspace; sync verification + manual reconcile
 instead of webhooks; text-only condition reports; AI proposals are advisory
 and based solely on submitted reports. Next steps: PayPal webhook
 verification with signature checks; image-based condition input; accounts and
@@ -150,7 +155,7 @@ per-user scoping; dispute messaging; multi-item holds.
 
 PayPal Developer Platform (Orders v2, Payments v2, JS SDK — sandbox);
 OpenAI-compatible LLM API (provider/model configurable; real OpenAI
-gpt-4o-mini output verified 2026-10-19); Node.js,
-Express, React, Vite, Tailwind CSS, shadcn/ui, zod. No sponsor tools used.
+gpt-4o-mini output verified locally and on the hosted app); Node.js,
+Express, React, Vite, Tailwind CSS, shadcn/ui, zod, PostgreSQL, Replit hosting.
 Full inventory and licenses: ATTRIBUTION.md. AI assistance used in
 development: disclosed in ATTRIBUTION.md.

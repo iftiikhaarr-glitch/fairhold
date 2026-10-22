@@ -5,6 +5,13 @@ and outputs, sandbox payments, and a real model for integration scenes. Keep
 ten seconds below the three-minute limit. Speak naturally; trim waiting time,
 not product steps. This replaces the earlier product-only timing plan.
 
+Recording target: **https://fairhold.replit.app/**. The hosted journey was
+verified on 22 October: $60 authorization, real model proposal of $35 with
+both quotation flags true, owner-confirmed $18.50 capture COMPLETED, and a
+separate $40 authorization VOIDED. Use a fresh rental for recording; actual
+model output can vary. The private judging login is separate from the sandbox
+buyer login. Keep both login steps and all secret values out of the footage.
+
 ## Before recording
 
 Follow `DEPLOYMENT.md`; get `npm run check` and `npm run smoke` passing. For a
@@ -24,7 +31,7 @@ needed. The actual YouTube upload and public playback check remain separate.
 |---|---|---|
 | 0:00–0:15 | App title and sample tent | “Lending a tent is easy. Settling the deposit after a scratch is awkward. FairHold combines PayPal deposit holds with an AI-drafted proposal, while the owner makes the final decision.” |
 | 0:15–0:35 | Repository README, `.env.example`, passing check output | “The repository includes reproducible setup. Install from the lockfile, configure PayPal sandbox and the AI provider on the server, then run the checks: lint, tests, production build, dependency advisories, and server startup.” |
-| 0:35–0:50 | Actual hosted URL and badges; or labeled local production URL | **Hosted only:** “One Node service serves the interface and API over HTTPS. The judging demo has password protection and persistent storage. API secrets stay on the server.” **Local alternative:** “This recording uses the local production build. Server deployment configuration is included; hosted verification is still pending.” |
+| 0:35–0:50 | `fairhold.replit.app`, signed-in app and badges | “Replit serves the interface and API over HTTPS. The judging demo has private access and PostgreSQL persistence. API secrets stay on the server.” |
 | 0:50–1:10 | Fill sample, create $60 hold, hide key handoff | “Alex records the tent's starting condition and requests a sixty-dollar deposit. Owner and renter receive separate role keys. Only the owner can capture or release the deposit.” |
 | 1:10–1:30 | Signed-in sandbox approval, active hold | “Sam approves through PayPal's sandbox. The server verifies approval before activating the authorization. This is a hold, with no capture yet.” |
 | 1:30–1:55 | Actual return report, model proposal and quote flags | “The return report describes a scratched rainfly and dented pole. The model proposes itemized amounts. The server checks the total against the hold and quoted evidence against the report. This is advice, not independent proof or a repair estimate.” |
