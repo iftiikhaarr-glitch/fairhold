@@ -1,11 +1,13 @@
 # Devpost submission copy — draft (English)
 
-> Status: draft, updated 2026-10-22. A real AI proposal, PayPal sandbox
+> Status: draft, updated 2026-10-26. A real AI proposal, PayPal sandbox
 > authorization, $18.50 final partial capture, and separate full release were
 > verified on the hosted Replit app on 2026-10-22 (see VERIFICATION_HOSTED.md).
 > Earlier external evidence is in VERIFICATION_LIVE.md. Pending/declined payment
-> outcomes were tested locally, not induced externally. A public
-> demo video, judge-access instructions, and entrant attestations remain pending.
+> outcomes were tested locally, not induced externally. The demo video is
+> public. The Replit deployment was suspended after a billing failure on
+> 2026-10-22; judges can run the complete labeled zero-key local demo from this
+> repository. Entrant attestations remain pending.
 > Dependencies were remediated on 2026-10-21, including Tailwind 4 migration.
 > Current validation and deployment limits are in RELEASE_CHECK.md.
 
@@ -15,9 +17,10 @@ FairHold
 
 Source: https://github.com/iftiikhaarr-glitch/fairhold
 
-Hosted demo: https://fairhold.replit.app/ (private judging login supplied separately).
+Local demo: `npm ci` then `npm run dev` (http://localhost:3000). See README.md.
+Former hosted demo: https://fairhold.replit.app/ (suspended; do not submit as a working demo URL).
 
-Public video link: pending; do not submit a placeholder URL.
+Public video: https://youtu.be/s2HExfDbRb4
 
 ## Elevator pitch
 

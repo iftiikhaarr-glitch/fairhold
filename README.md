@@ -20,11 +20,16 @@ Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
 judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
 and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
-**Hosted judging demo:** [fairhold.replit.app](https://fairhold.replit.app/),
-protected by a private demo login supplied by the entrant. PostgreSQL storage
-is implemented and tested. See `REPLIT_HANDOFF.md` and the verification records
-for the latest completed checks; a configured integration badge alone does not
-establish a successful provider transaction.
+**Judging access:** The former Replit deployment at
+[fairhold.replit.app](https://fairhold.replit.app/) was suspended by Replit on
+2026-10-22 after a billing failure. As checked on 2026-10-26, it is not a
+working demo link. Run the repository locally with `npm ci` and `npm run dev`;
+the zero-key simulation and AI fixture are clearly labeled and exercise the
+complete workflow. Real PayPal sandbox and AI results from the previously live
+hosted deployment are documented in `VERIFICATION_HOSTED.md`. PostgreSQL
+storage was implemented and tested before the deployment suspension.
+
+**Demo video:** [FairHold | PayPal AI Hackathon Demo (2:55)](https://youtu.be/s2HExfDbRb4).
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -183,12 +188,10 @@ Key design rules (see SPEC.md for the full spec):
 - Real sandbox and live-model results are recorded in `VERIFICATION_LIVE.md`.
   Reproducing them requires your own sandbox app and AI credentials. This
   repository contains no credentials.
-- **Submission preparation is in progress:** the demo video and judge-access
-  instructions are being finalized. The recording script is in
-  `VIDEO_BUILD_SCRIPT.md`; a completed video is not yet published. Before
-  submission, arrange free runnable access through the judging period
-  specified in the supplied rules (Dec 15, 2026 08:00 PT). Keep server secrets
-  private; do not put API keys in Devpost text or the video.
+- The [public demo video](https://youtu.be/s2HExfDbRb4) includes actual hosted
+  verification evidence. The hosted deployment is currently suspended, so use
+  the local zero-key walkthrough above. Keep server secrets private; do not put
+  API keys in Devpost text or the video.
 
 ## Repository map
 
