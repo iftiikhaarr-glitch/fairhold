@@ -51,7 +51,7 @@ export const config = {
   currency: (env.FAIRHOLD_CURRENCY || "USD").toUpperCase(),
 
   paypal: {
-    appBaseUrl: env.FAIRHOLD_APP_URL || "http://localhost:3000",
+    appBaseUrl: env.FAIRHOLD_APP_URL || env.RENDER_EXTERNAL_URL || "http://localhost:3000",
     clientId: realValue(env.PAYPAL_CLIENT_ID),
     clientSecret: realValue(env.PAYPAL_CLIENT_SECRET),
     // Sandbox only. Production endpoints are intentionally not supported.

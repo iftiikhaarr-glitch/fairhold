@@ -2,9 +2,10 @@
 
 GitHub hosts the source and automated checks. FairHold's Express backend must
 run on a Node hosting service: GitHub Pages alone cannot run PayPal or AI calls.
-Replit is the selected host. The included `.replit` config builds and runs one
-Express service for both the UI and API. `render.yaml` remains an optional
-alternative. Configuration files alone are not evidence of deployment.
+The included `.replit` config builds and runs one Express service for both the
+UI and API. `render.yaml` configures a free Render judging demo with an
+external PostgreSQL database. Configuration files alone are not evidence of
+deployment.
 
 ## Replit deployment
 
@@ -88,41 +89,35 @@ build, set `FAIRHOLD_APP_URL=http://localhost:8787` in `.env`, run
 Restart after changing configuration. Existing PayPal orders retain their
 original return URLs; use a new order after changing the origin.
 
-## Proposed Render deployment
+## Free Render judging deployment
 
-The Blueprint uses a **paid service and a 1 GB persistent disk**. Review the
-provider's displayed recurring cost and agree a budget before creating it.
-No hosting purchase is required just to review or publish this repository.
-Pricing checked on 21 October 2026 lists $7/month for `0.5c-512mb` and
-$0.25/GB-month for persistent disks: **$7.25/month base hosting** for this
-configuration on the $0 workspace plan. Taxes, traffic/build overages, and AI
-provider charges are additional. This estimate is not a hard billing cap;
-confirm the provider's actual checkout before provisioning. See
-[Render pricing](https://render.com/pricing).
-
-The JSON store requires one application process and one instance; do not scale
-it horizontally. A free ephemeral filesystem can lose payment state on restart
-and is not the deployment proposed here.
+The Blueprint requests a **free web service** and no disk. Render's free web
+service sleeps after 15 minutes of inactivity and can take around a minute to
+wake. Its filesystem is ephemeral, so the demo requires a separate durable
+PostgreSQL database. The `render.yaml` file leaves `DATABASE_URL` private and
+uses Render's `RENDER_EXTERNAL_URL` as the PayPal return origin. Check current
+[Render free-service limits](https://render.com/docs/free) before deploying.
 
 1. Publish the reviewed source to GitHub. Confirm its **Verify FairHold**
    workflow passes before deployment.
 2. Sign in to Render. Connect only the FairHold repository and create a
    Blueprint from `render.yaml`. Do not grant access to unrelated repositories.
-3. Review the paid compute/disk configuration before accepting or purchasing
-   services. `autoDeployTrigger: off` prevents later pushes from automatically
-   replacing the running demo.
-4. Set `FAIRHOLD_APP_URL` to the exact assigned public HTTPS origin. If the
-   name is assigned after initial creation, update it and redeploy. Use no path
-   suffix. Production startup requires this value, a long demo password, and
-   an explicit data path.
+3. Confirm the displayed compute plan is **Free** and no paid disk or database
+   is being provisioned. `autoDeployTrigger: off` prevents later pushes from
+   automatically replacing the running demo.
+4. Provide `DATABASE_URL` from a dedicated external PostgreSQL database in
+   Render's private environment settings. Production startup requires this,
+   a public HTTPS origin, and a long demo password. Render supplies its own
+   origin automatically; `FAIRHOLD_APP_URL` can override it if necessary.
 5. Confirm these environment values in the server dashboard:
 
 | Variable | Value / purpose |
 |---|---|
 | `NODE_ENV` | `production` |
-| `NODE_VERSION` | `24.15.0` |
-| `FAIRHOLD_APP_URL` | Actual HTTPS demo origin |
-| `FAIRHOLD_DATA_FILE` | `/var/data/fairhold.json` on the attached disk |
+| `NODE_VERSION` | `22.12.0` |
+| `RENDER_EXTERNAL_URL` | Automatically supplied HTTPS demo origin |
+| `FAIRHOLD_STORAGE` | `postgres` |
+| `DATABASE_URL` | Private PostgreSQL connection string; never commit it |
 | `DEMO_ACCESS_USER` | `judge` |
 | `DEMO_ACCESS_PASSWORD` | Blueprint-generated random secret, at least 24 characters |
 | `PAYPAL_CLIENT_ID` | Your sandbox app client ID |
@@ -165,9 +160,8 @@ durable database transactions, and a further security review.
   409 and must be refreshed after the first operation completes.
 - Reset is disabled for sandbox rentals so it cannot erase outstanding holds.
   Cancel or resolve rentals individually.
-- Restart the service and confirm records persist in PostgreSQL (or the
-  attached disk for the optional JSON deployment). Retain
-  redacted evidence. Do not reset or remove the disk while holds are active.
+- Restart the service and confirm records persist in PostgreSQL. Retain
+  redacted evidence. Do not reset or remove the database while holds are active.
 - Existing `verify:live` is intended for an unprotected local development
   server. Scripts against the protected host also need Basic authorization.
 

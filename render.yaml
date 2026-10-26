@@ -1,33 +1,28 @@
-# Proposed hosted judging demo. This is a PAID service with a persistent disk.
-# Creating a Blueprint provisions resources: review the displayed bill first.
-# Source publication alone does not deploy or provision anything.
+# Free judging demo. Render supplies RENDER_EXTERNAL_URL for PayPal returns.
+# A durable external PostgreSQL database is required because the free service
+# loses local files whenever it sleeps or restarts. Set DATABASE_URL privately.
 services:
   - type: web
     name: fairhold-demo
     runtime: node
-    plan: 0.5c-512mb
+    plan: free
     numInstances: 1
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeployTrigger: off
-    disk:
-      name: fairhold-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: 24.15.0
-      - key: FAIRHOLD_DATA_FILE
-        value: /var/data/fairhold.json
-      - key: FAIRHOLD_APP_URL
+        value: 22.12.0
+      - key: FAIRHOLD_STORAGE
+        value: postgres
+      - key: DATABASE_URL
         sync: false
       - key: DEMO_ACCESS_USER
         value: judge
       - key: DEMO_ACCESS_PASSWORD
         generateValue: true
-# Add PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, AI_API_KEY and any AI_MODEL /
-# AI_BASE_URL overrides privately in the service Environment tab before the
-# real-integration demo. Until then, both fallbacks remain visibly labeled.
+# PayPal sandbox and AI credentials are optional and must be set privately in
+# the Render dashboard. Without them, both modes are clearly labeled demos.

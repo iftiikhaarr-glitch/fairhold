@@ -7,7 +7,7 @@ import { buildApp } from "./app.js";
 
 if (process.env.NODE_ENV === "production") {
   if (config.demo.password.length < 24) throw new Error("Production demo requires DEMO_ACCESS_PASSWORD with at least 24 characters.");
-  if (!process.env.FAIRHOLD_APP_URL?.startsWith("https://")) throw new Error("Production demo requires FAIRHOLD_APP_URL set to its public HTTPS origin.");
+  if (!config.paypal.appBaseUrl.startsWith("https://")) throw new Error("Production demo requires FAIRHOLD_APP_URL or RENDER_EXTERNAL_URL set to its public HTTPS origin.");
   if (config.storage === "json" && !process.env.FAIRHOLD_DATA_FILE) throw new Error("Production JSON storage requires FAIRHOLD_DATA_FILE on durable storage.");
 }
 
