@@ -20,14 +20,16 @@ Built for the PayPal AI Hackathon (submission period Oct 1 – Nov 12, 2026).
 judging-demo configuration are included. See `RELEASE_CHECK.md` for validation
 and `DEPLOYMENT.md` for setup, hosting, and private server configuration.
 
-**Judging access:** The former Replit deployment at
-[fairhold.replit.app](https://fairhold.replit.app/) was suspended by Replit on
-2026-10-22 after a billing failure. As checked on 2026-10-26, it is not a
-working demo link. Run the repository locally with `npm ci` and `npm run dev`;
-the zero-key simulation and AI fixture are clearly labeled and exercise the
-complete workflow. Real PayPal sandbox and AI results from the previously live
-hosted deployment are documented in `VERIFICATION_HOSTED.md`. PostgreSQL
-storage was implemented and tested before the deployment suspension.
+**Hosted judging demo:** [fairhold-demo.onrender.com](https://fairhold-demo.onrender.com/)
+is deployed on Render's free web service with a free Neon PostgreSQL database.
+The app asks for a judge login; access details are provided through Devpost's
+judge-only testing instructions. After 15 minutes without traffic, the free
+service may take around a minute to wake. PayPal simulation and fixture AI are
+clearly labeled when external credentials are not configured. The former
+Replit deployment was suspended on 2026-10-22 after a billing failure; it is no
+longer used. For a zero-key local fallback, run `npm ci` and `npm run dev`.
+Real PayPal sandbox and AI results from the earlier hosted verification are in
+`VERIFICATION_HOSTED.md`.
 
 **Demo video:** [FairHold | PayPal AI Hackathon Demo (2:55)](https://youtu.be/s2HExfDbRb4).
 
@@ -189,9 +191,11 @@ Key design rules (see SPEC.md for the full spec):
   Reproducing them requires your own sandbox app and AI credentials. This
   repository contains no credentials.
 - The [public demo video](https://youtu.be/s2HExfDbRb4) includes actual hosted
-  verification evidence. The hosted deployment is currently suspended, so use
-  the local zero-key walkthrough above. Keep server secrets private; do not put
-  API keys in Devpost text or the video.
+  verification evidence. The current hosted demo uses labeled simulation and
+  fixture modes unless sandbox and AI credentials are configured. It may take
+  around a minute to wake after inactivity. The local zero-key walkthrough is
+  also available above. Keep server secrets private; do not put API keys in
+  Devpost text or the video.
 
 ## Repository map
 
