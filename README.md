@@ -223,7 +223,7 @@ proposals are advisory and based solely on the submitted report.
 
 For a hosted judging demo, `NODE_ENV=production` requires an HTTPS app origin,
 a demo access password of at least 24 characters, and durable storage.
-Replit uses `DATABASE_URL` and `FAIRHOLD_STORAGE=postgres`; local JSON hosting
+Render uses `DATABASE_URL` and `FAIRHOLD_STORAGE=postgres`; local JSON hosting
 requires an explicit durable data path and a single server instance.
 PostgreSQL transactions and rental advisory locks coordinate multiple processes.
 Shared demo access protects
