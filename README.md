@@ -31,7 +31,7 @@ longer used. For a zero-key local fallback, run `npm ci` and `npm run dev`.
 Real PayPal sandbox and AI results from the earlier hosted verification are in
 `VERIFICATION_HOSTED.md`.
 
-**Demo video:** [FairHold | PayPal AI Hackathon Demo (2:55)](https://youtu.be/s2HExfDbRb4).
+**Demo video:** [FairHold | PayPal AI Hackathon Demo (Render, 2:59)](https://youtu.be/NbPz16qz1Os).
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -190,7 +190,7 @@ Key design rules (see SPEC.md for the full spec):
 - Real sandbox and live-model results are recorded in `VERIFICATION_LIVE.md`.
   Reproducing them requires your own sandbox app and AI credentials. This
   repository contains no credentials.
-- The [public demo video](https://youtu.be/s2HExfDbRb4) includes actual hosted
+- The [public demo video](https://youtu.be/NbPz16qz1Os) includes actual hosted
   verification evidence. The current hosted demo uses labeled simulation and
   fixture modes unless sandbox and AI credentials are configured. It may take
   around a minute to wake after inactivity. The local zero-key walkthrough is
