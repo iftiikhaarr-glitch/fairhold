@@ -31,7 +31,7 @@ longer used. For a zero-key local fallback, run `npm ci` and `npm run dev`.
 Real PayPal sandbox and AI results from the earlier hosted verification are in
 `VERIFICATION_HOSTED.md`.
 
-**Demo video:** [FairHold | PayPal AI Hackathon Demo (Render, 2:59)](https://youtu.be/NbPz16qz1Os).
+**Demo video:** [FairHold | PayPal AI Hackathon Demo (2:59)](https://youtu.be/NbPz16qz1Os).
 
 - Why PayPal is central: the product *is* a payment state machine —
   `authorize → partial capture | void | reconcile` (Orders v2 + Payments v2,
@@ -207,7 +207,7 @@ Key design rules (see SPEC.md for the full spec):
 | `VERIFICATION_LIVE.md` | Actual external AI and PayPal sandbox results |
 | `RELEASE_CHECK.md` | Release checks, dependency remediation, and historical audit |
 | `DEPLOYMENT.md` | Build, server configuration, hosting, and deployed acceptance |
-| `SUBMISSION.md` | Devpost submission copy (draft) |
+| `SUBMISSION.md` | Devpost submission record (submitted entry) |
 | `VIDEO_BUILD_SCRIPT.md` | Build-to-demo recording script (2:50 target) |
 | `ATTRIBUTION.md` | Dependencies, assets, tools, and AI-assistance record |
 | `server/` | Express API, state machine, PayPal + AI adapters, tests |
