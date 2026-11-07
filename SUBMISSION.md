@@ -1,6 +1,6 @@
 # Devpost submission record (English)
 
-> Status: submitted to Devpost; the project remains editable until the hackathon deadline (Nov 12, 2026, 12:00 pm Pacific Time). The required public YouTube demo is included in the submission and runs 2:59. A real AI proposal, PayPal sandbox authorization, $18.50 final partial capture, and separate full release were verified in the earlier hosted sandbox journey on Replit (see VERIFICATION_HOSTED.md). The current Render judging demo uses clearly labeled PayPal simulation and fixture AI unless external credentials are configured. The former Replit deployment was suspended after a billing failure on 2026-10-22. Dependencies were remediated, including the Tailwind 4 migration; see RELEASE_CHECK.md for validation and deployment limits.
+> Status: Submitted to the PayPal AI Hackathon. This record was refreshed on 2026-11-07 after the earlier Devpost notice that the required demo video was missing. The public 2:59 video is now linked below; the entry remains editable through the published deadline. A real AI proposal and PayPal sandbox partial capture were verified on the former Replit deployment on 2026-10-22 (see VERIFICATION_HOSTED.md). The current Render judging demo uses clearly labeled simulation and fixture AI when live credentials are not configured. Earlier external evidence remains recorded separately; pending/declined cases were tested locally. Replit was suspended after a billing failure and is no longer the active demo. Dependencies and release details are documented in RELEASE_CHECK.md.
 
 ## Project name
 
@@ -8,9 +8,10 @@ FairHold
 
 Source: https://github.com/iftiikhaarr-glitch/fairhold
 
-Hosted judging demo: https://fairhold-demo.onrender.com/ (Render; access details are in Devpost's judge-only testing instructions). The current deployment uses labeled PayPal simulation and fixture AI; the free service may take around a minute to wake after inactivity. Local fallback: `npm ci` then `npm run dev` (http://localhost:3000); see README.md.
+Local demo: `npm ci` then `npm run dev` (http://localhost:3000). See README.md.
+Hosted judging demo (Render): https://fairhold-demo.onrender.com/ (private judge sign-in; access instructions are in Devpost).
 
-Public demo video (2:59): https://youtu.be/NbPz16qz1Os
+Public video: https://youtu.be/NbPz16qz1Os
 
 ## Elevator pitch
 
@@ -64,9 +65,8 @@ don't have card-hold infrastructure.
   SDK with `intent=authorize` for the approval sheet.
 - **Backend:** Node + Express. A pure, unit-tested deposit state machine; a
   PayPal adapter (Orders v2 + Payments v2, sandbox); an AI adapter; PostgreSQL
-  transactions and rental advisory locks in the hosted implementation, with
-  JSON persistence for local setup; money as integer cents. Successful mutations
-  wait for database commit.
+  transactions and rental advisory locks on hosted PostgreSQL, with JSON persistence for
+  local setup; money as integer cents. Successful mutations wait for database commit.
 - **PayPal integration:** `intent=AUTHORIZE` orders; partial capture with
   `final_capture: true` sent explicitly (v2 defaults it to false); void for
   releases; capture statuses checked explicitly — only COMPLETED resolves,
@@ -150,7 +150,6 @@ per-user scoping; dispute messaging; multi-item holds.
 PayPal Developer Platform (Orders v2, Payments v2, JS SDK — sandbox);
 OpenAI-compatible LLM API (provider/model configurable; real OpenAI
 gpt-4o-mini output verified locally and on the hosted app); Node.js,
-Express, React, Vite, Tailwind CSS, shadcn/ui, zod, PostgreSQL, and Render hosting
-for the current judging demo. The earlier hosted sandbox run used Replit. Full
-inventory and licenses: ATTRIBUTION.md. AI assistance used in development is
-disclosed in ATTRIBUTION.md.
+Express, React, Vite, Tailwind CSS, shadcn/ui, zod, PostgreSQL, Render hosting, and Neon.
+Full inventory and licenses: ATTRIBUTION.md. AI assistance used in
+development: disclosed in ATTRIBUTION.md.
